@@ -1,4 +1,4 @@
-import pydot_ng as pydot
+#import pydot_ng as pydot
 import networkx as nx
 import matplotlib.pyplot as plt
 
@@ -123,19 +123,3 @@ class Graph(object):
         print red_labels
         nx.draw_networkx_labels(nxg, pos, labels=red_labels, font_color='r')
 
-    def _create_dot_graph(self):
-        dot_graph = pydot.Dot(graph_type='digraph', concentrate=True, rankdir="LR")
-        dot_graph.set_node_defaults(shape='rect', fontsize=12)
-        for n in self._nodes:
-            node_name = self.node_label_fn(n)
-            node = pydot.Node(shape="ellipse", name=node_name)
-            if n in self.node_positions:
-                node.set_pos("%d,%d!" % (self.node_positions[n][0], self.node_positions[n][1]))
-            dot_graph.add_node(node)
-        for src_node, edges in self._edges.items():
-            for e in edges:
-                dot_graph.add_edge(pydot.Edge(self.node_label_fn(src_node), self.node_label_fn(e.target), label=e.weight if e.weight!=1.0 else ""))
-        return dot_graph
-
-    def _repr_svg_(self):
-        return self._create_dot_graph().create_svg()

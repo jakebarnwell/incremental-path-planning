@@ -1,0 +1,34 @@
+class IncrementalSearchProblem(object):
+    # For now we have a dict mapping robot (x,y) --> Graph, i.e. its understanding
+    #  of the world when it's sitting at location (x,y)
+    def __init__(self, world, start_node=None, goal_node=None):
+        self._start_node = start_node
+        self._goal_node = goal_node
+        self._world = world
+        
+    def __repr__(self):
+        return "{}(start_node={}, goal_node={}, world={})".format(type(self).__name__, repr(self._start_node), repr(self._goal_node), repr(self._world))
+    
+    def __str__(self):
+        repr_world = self._world if len(self._world) == 0 else "{...}"
+        return "{}(start_node={}, goal_node={}, world={})".format(type(self).__name__, repr(self._start_node), repr(self._goal_node), repr_world)
+    
+    def get_graph(self, robot_location):
+        return self._world[robot_location]
+                
+    @property
+    def start_node(self):
+        return self._start_node
+    
+    @property
+    def goal_node(self):
+        return self._goal_node
+    
+    @start_node.setter
+    def start_node(self, new_start_node):
+        self._start_node = new_start_node
+        
+    @goal_node.setter
+    def goal_node(self, new_goal_node):
+        self._goal_node = new_goal_node
+    
