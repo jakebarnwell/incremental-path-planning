@@ -164,4 +164,5 @@ class Grid(object):
         xy_coords = map(lambda idx: self.cell_xy(*idx), path)
         xx, yy = zip(*xy_coords)
         axes.plot(xx, yy, *args, **kwargs)
+        
 

@@ -15,6 +15,12 @@ class IncrementalSearchProblem(object):
     
     def get_graph(self, robot_location):
         return self._world[robot_location]
+    
+    def draw_state(self, grid, start=None, goal=None, robot_location=None, path=None):
+        axes = grid.draw()
+        if robot_location:
+            grid.draw_cell_circle(axes, robot_location, color='red')
+        
                 
     @property
     def start_node(self):
