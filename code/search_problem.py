@@ -37,3 +37,15 @@ class IncrementalSearchProblem(object):
     def goal_node(self, new_goal_node):
         self._goal_node = new_goal_node
     
+
+# class World:
+#     __init__(grid)
+#     # --> graph
+#     robot_xy ;; current tuple (x,y) of robot position
+#     path_travelled ;; path the robot has travelled [(x,y),...] updated in backgroudn
+
+# d*lite has to call update_world(robot_position_node);; returns the new graph
+#  ground_truth_graph
+#  visible_world_graph
+
+# (3,4)
