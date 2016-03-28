@@ -20,7 +20,6 @@ class IncrementalSearchProblem(object):
         axes = grid.draw()
         if robot_location:
             grid.draw_cell_circle(axes, robot_location, color='red')
-        
                 
     @property
     def start_node(self):
