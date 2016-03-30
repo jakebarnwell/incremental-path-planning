@@ -1,6 +1,7 @@
 #import pydot_ng as pydot
 import networkx as nx
 import matplotlib.pyplot as plt
+from copy import deepcopy
 
 class NodeNotInGraph(Exception):
     def __init__(self, node):
@@ -70,11 +71,24 @@ class Graph(object):
             raise NodeNotInGraph(node)
         return self.node_positions[node]
 
-    def node_edges(self, node):
+    def node_edges(self, node): #todo is this only outgoing edges?
         if not node in self:
             raise NodeNotInGraph(node)
         return self._edges.get(node, set())
 
+    def get_neighbors(self, node): #todo probably inefficient #todo this is undirected
+        return map(lambda edge: edge.source if edge.source != node else edge.target,
+                   self.node_edges(node))
+
+    def get_edge_weight(self, node1, node2):
+        matching_edges = filter(lambda edge: edge.target == node2,
+                                self.node_edges(node1))
+        return matching_edges[0].weight #todo this assumes only one edge from node1 to node2 exists
+
+    def copy(self):
+        return deepcopy(self)
+
+    # DRAWING METHODS
     def draw(self, highlight_edges=None):
         nxg = nx.DiGraph()
         edges = [(e.source, e.target, {'weight':e.weight, 'inv_weight':1.0/e.weight}) for node_set in self._edges.values() for e in node_set]

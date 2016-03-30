@@ -93,9 +93,16 @@ class PriorityQueue(Queue):
         else:
             return self.A.pop()[1]
 
-    def preview(self):
-        "Access the top item on the queue without popping it"
-        return None #TODO
+    def remove(self, item):
+        "removes all instances of item from the queue"
+        self.__delitem__(item)
+
+    def top_key(self): #todo this is inefficient
+        "Get the key corresponding to the next item to be popped"
+        next_item = self.pop()
+        key = self.f(next_item)
+        self.insert(next_item)
+        return key
 
     def __len__(self):
         return len(self.A)
