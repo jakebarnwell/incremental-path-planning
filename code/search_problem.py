@@ -1,3 +1,5 @@
+from grid import *
+
 class IncrementalSearchProblem(object):
     # For now we have a dict mapping robot (x,y) --> Graph, i.e. its understanding
     #  of the world when it's sitting at location (x,y)
@@ -55,7 +57,7 @@ class World:
     The only way to mutate anything in this class is via the update_world
     method.
     """
-    def __init__(self, init_grid_ground_truth, robot_start_position, vision_radius=5):
+    def __init__(self, init_grid_ground_truth, robot_start_position, vision_radius=3):
         # The radius the robot can "see" for its belief state
         self._VISION_RADIUS = vision_radius
 
@@ -77,17 +79,26 @@ class World:
         Updates the ground truth grid AND the belief state grid,
         and returns a GRAPH-version of the belief state.
         """
-        _time += 1
-        _path_travelled.append(next_robot_position)
+        self._time += 1
+        self._path_travelled.append(next_robot_position)
 
-        # Update ground truth
-        pass
+        # Update ground truth, e.g. if there are moving obstacles. Note that
+        #  we must update the robot's position in the grid as well.
+        rx, ry = self._robot_position
+        nrx, nry = next_robot_position
+        self._grid_ground_truth.mark_cell_as(nrx, nry, CELL_ROBOT)
+        self._grid_ground_truth.mark_cell_as(rx, ry, CELL_FREE)
 
-        # Re-calculate belief state
+        # Store new robot position. Must happen before _update_belief_state
+        #  is called.
+        self._robot_position = next_robot_position
+
+        # Re-calculate belief state. Must happen after the new _robot_position
+        #  is set.
         self._update_belief_state()
 
         # Graph-ify the belief state and return it
-        return self._grid_belief_state.to_graph()
+        return self.belief
 
     def _update_belief_state(self):
         """
@@ -103,7 +114,7 @@ class World:
                 x, y = self._grid_ground_truth.cell_center(col, row)
                 if (rx - x)**2 + (ry - y)**2 <= (self._VISION_RADIUS * (1 + TOLERANCE))**2:
                     self._grid_belief_state.set_cell(col, row, self._grid_ground_truth.get_cell(col,row))
-                    print "Visible {} --> {}".format(self._robot_position, (col, row))
+                    # print "Visible {} --> {}: {}".format(self._robot_position, (col, row), self._grid_ground_truth.get_cell(col,row))
                 else:
                     pass
                     # Instead of overwriting e.g. "0"s (free cell) to every cell that
@@ -112,7 +123,6 @@ class World:
                     #  no longer "nearby" that cell. Hence, if that cell has CHANGED,
                     #  the robot doesn't know that.
         return True
-
 
     @property
     def robot_position(self):
@@ -125,3 +135,18 @@ class World:
     @property
     def path_travelled(self):
         return self._path_travelled
+
+    @property
+    def belief(self):
+        """
+        D* Lite should call this. It returns the current belief state as a graph.
+        """
+        return self._grid_belief_state.to_graph()
+
+    @property
+    def belief_grid(self):
+        """
+        Returns current belief state as a grid. Helpful if you want to draw
+        pretty grids.
+        """
+        return self._grid_belief_state

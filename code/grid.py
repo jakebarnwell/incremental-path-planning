@@ -75,7 +75,6 @@ class Grid(object):
                 if value not in ["0","1","S","G","R"]:
                     raise WrongGridFormat
                 grid_array[col,num_rows-1 - row] = string2value(value)
-                # print "grid[{}, {}] = {}".format(col, num_rows-1-row,grid_array[col,num_rows-1 - row])
 
         grid = grid_class(num_cols, num_rows, figsize)
         grid.grid_array = grid_array
@@ -241,11 +240,13 @@ class Grid(object):
         obstacles = self.get_cells_of_type(CELL_OBSTACLE)
         for col in range(xmin, xmax):
             for row in range(ymin, ymax):
-                # For obstacle blocks, don't add any edges at all (I was considering
-                # adding infinity-weight edges, but it just adds more work for the path
-                # solver)
-                if (col, row) not in obstacles:
-                    for neighbor in filter(lambda n: n not in obstacles, neighbors((col,row))):
-                        graph.add_edge((col,row), neighbor, bidirectional=False)
+                # For obstacle blocks, add a infinite-weight edges.
+                if (col, row) in obstacles:
+                    for neighbor in neighbors((col,row)):
+                        graph.add_edge((col,row), neighbor, weight=np.inf, bidirectional=False)
+                else:
+                    for neighbor in neighbors((col,row)):
+                        weight = np.inf if neighbor in obstacles else 1.0
+                        graph.add_edge((col,row), neighbor, weight=weight, bidirectional=False)
 
         return graph
