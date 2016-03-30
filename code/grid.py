@@ -34,14 +34,18 @@ class Grid(object):
     def __init__(self, num_cols=10, num_rows=10, xy_limits=None, figsize=None):
         self.generate_grid(num_cols, num_rows)
 
-        # xy_limits are mostly for drawing purposes
-        if not xy_limits:
-            xy_limits = (0, num_cols), (0, num_rows)
-        self._set_xy_limits(*xy_limits)
+        self.xlimits = (minx, maxx) = (0, num_cols)
+        self.ylimits = (miny, maxy) = (0, num_rows)
+        self.cell_size = (maxx-minx) / num_cols, (maxy-miny) / num_rows
 
-        if not figsize:
-            figsize = self._calc_auto_figsize(xy_limits)
-        self.figsize = figsize
+        if figsize:
+            self.figsize = figsize
+        else:
+            width, height = maxx - minx, maxy - miny
+            if width > height:
+                self.figsize = (PREFERRED_MAX_FIG_WIDTH, height * PREFERRED_MAX_FIG_WIDTH / width)
+            else:
+                self.figsize = (width * PREFERRED_MAX_FIG_HEIGHT / height, PREFERRED_MAX_FIG_HEIGHT)
 
     @classmethod
     def create_from_file(grid_class, grid_file, xy_limits=None, figsize=None):
@@ -91,27 +95,6 @@ class Grid(object):
     def generate_grid(self, num_cols, num_rows):
         self.grid_array = np.zeros([num_cols, num_rows])
 
-    def _set_xy_limits(self, xlimits, ylimits):
-        num_cols, num_rows = self.size
-        if not isinstance(xlimits,tuple) or not len(xlimits)==2 \
-           or not isinstance(ylimits,tuple) or not len(ylimits)==2 \
-           or not xlimits[0] < xlimits[1] or not ylimits[0] < ylimits[1]:
-            raise ValueError('Specified xlimits or ylimits are not valid.')
-        self.xlimits, self.ylimits = xlimits, ylimits
-        minx, maxx = self.xlimits
-        miny, maxy = self.ylimits
-        self.cell_dimensions = (maxx-minx) / num_cols, (maxy-miny) / num_rows
-
-    def _calc_auto_figsize(self, xy_limits):
-        (minx, maxx), (miny, maxy) = xy_limits
-        width, height = maxx - minx, maxy - miny
-        if width > height:
-            figsize = (PREFERRED_MAX_FIG_WIDTH, height * PREFERRED_MAX_FIG_WIDTH / width)
-        else:
-            figsize = (width * PREFERRED_MAX_FIG_HEIGHT / height, PREFERRED_MAX_FIG_HEIGHT)
-        return figsize
-
-
     def add_random_obstacles(self, num_obs):
         """Clear grid and add random obstacles"""
 
@@ -144,11 +127,11 @@ class Grid(object):
         """Returns the center xy point of the cell."""
         minx, maxx = self.xlimits
         miny, maxy = self.ylimits
-        width, height = self.cell_dimensions
+        width, height = self.cell_size
         return minx + (ix+0.5) * width, miny + (iy+0.5) * height
 
     def _cell_verts(self, ix, iy):
-        width, height = self.cell_dimensions
+        width, height = self.cell_size
         x, y = self.cell_xy(ix, iy)
         verts = [(x + ofx*0.5*width, y + ofy*0.5*height) for ofx, ofy in [(-1,-1),(-1,1),(1,1),(1,-1)]]
         return verts
@@ -166,7 +149,7 @@ class Grid(object):
         minx, maxx = self.xlimits
         miny, maxy = self.ylimits
 
-        width, height = self.cell_dimensions
+        width, height = self.cell_size
 
         x = map(lambda i: minx + width*i, range(cols+1))
         y = map(lambda i: miny + height*i, range(rows+1))
@@ -210,7 +193,7 @@ class Grid(object):
     def draw_cell_circle(self, axes, xy, size=0.5, **kwargs):
         ix, iy = xy
         x, y = self.cell_xy(ix, iy)
-        xr, yr = 0.5 * self.cell_dimensions[0], 0.5 * self.cell_dimensions[1]
+        xr, yr = 0.5 * self.cell_size[0], 0.5 * self.cell_size[1]
         axes.add_patch(Ellipse((x,y), xr, yr, **kwargs))
 
     def draw_path(self, axes, path, *args, **kwargs):
