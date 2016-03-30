@@ -1,5 +1,6 @@
 from grid import Grid
-from search_problem import IncrementalSearchProblem, World
+from search_problem import IncrementalSearchProblem
+from world import World
 from dstar import dstar_lite
 
 grid = Grid(3,5)
