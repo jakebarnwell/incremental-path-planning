@@ -38,9 +38,8 @@ class IncrementalSearchProblem(object):
         self._goal_node = new_goal_node
 
 
-EPSILON_FRACTION = 0.01
-# Work in progress... need to do the right stuff with grids and make them
-#  mutable I think
+TOLERANCE = 0.01
+
 class World:
     """
     A World object represents the belief-state of a robot. In
@@ -57,19 +56,21 @@ class World:
     method.
     """
     def __init__(self, init_grid_ground_truth, robot_start_position, vision_radius=5):
-        # Stores what the world really looks like currently
-        self._grid_ground_truth = init_grid_ground_truth
-        # Stores what the robot "sees" or "believes" to be the world currently
-        self._grid_belief_state = None
-        self._update_belief_state()
+        # The radius the robot can "see" for its belief state
+        self._VISION_RADIUS = vision_radius
 
         # The current time step, robot's position, and path travelled so far
         self._time = 0
         self._robot_position = robot_start_position
         self._path_travelled = []
 
-        # The radius the robot can "see" for its belief state
-        self._VISION_RADIUS = vision_radius
+        # Stores what the world really looks like currently
+        self._grid_ground_truth = init_grid_ground_truth
+
+        # Stores what the robot "sees" or "believes" to be the world currently
+        self._grid_belief_state = init_grid_ground_truth.clone_template()
+        self._update_belief_state()
+
 
     def update_world(self, next_robot_position):
         """
@@ -94,28 +95,33 @@ class World:
         information typically depends on the robot's position,
         e.g. what the robot can "see" from where it's at.
         """
-        grid_array = self._grid_ground_truth.grid_array
+        ground_truth_grid_array = self._grid_ground_truth.get_grid_array()
         num_cols, num_rows = self._grid_ground_truth.size
-        x, y = self._robot_position
-        cx, cy = self._grid_ground_truth.cell_xy(x, y)
+        rx, ry = self._grid_ground_truth.cell_center(*self._robot_position)
         for col in xrange(num_cols):
             for row in xrange(num_rows):
-                ix, iy = self._grid_ground_truth.cell_xy(i, j)
-                if (cx - ix)**2 + (cy - jy)**2 <= (self._VISION_RADIUS**2) * (1 + EPSILON_FRACTION):
-                    self._grid_belief_state[i, j] = grid_array
+                x, y = self._grid_ground_truth.cell_center(col, row)
+                if (rx - x)**2 + (ry - y)**2 <= (self._VISION_RADIUS * (1 + TOLERANCE))**2:
+                    self._grid_belief_state.set_cell(col, row, self._grid_ground_truth.get_cell(col,row))
+                    print "Visible {} --> {}".format(self._robot_position, (col, row))
                 else:
-                    self._grid_belief_state[i, j] = 0 # It thinks it's clear
+                    pass
+                    # Instead of overwriting e.g. "0"s (free cell) to every cell that
+                    #  the robot can't see, just do nothing to them, so it retains its
+                    #  "knowledge" of what used to be at the cell, even after it is
+                    #  no longer "nearby" that cell. Hence, if that cell has CHANGED,
+                    #  the robot doesn't know that.
         return True
 
 
     @property
     def robot_position(self):
-        return _robot_position
+        return self._robot_position
 
     @property
     def time(self):
-        return _time
+        return self._time
 
     @property
     def path_travelled(self):
-        return _path_travelled
+        return self._path_travelled

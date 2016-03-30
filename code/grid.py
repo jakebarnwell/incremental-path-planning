@@ -31,7 +31,7 @@ CELL_GOAL = 9
 VALID_CELL_TYPES = [CELL_FREE, CELL_OBSTACLE, CELL_START, CELL_ROBOT, CELL_GOAL]
 
 class Grid(object):
-    def __init__(self, num_cols=10, num_rows=10, xy_limits=None, figsize=None):
+    def __init__(self, num_cols=10, num_rows=10, figsize=None):
         self.generate_grid(num_cols, num_rows)
 
         self.xlimits = (minx, maxx) = (0, num_cols)
@@ -48,14 +48,14 @@ class Grid(object):
                 self.figsize = (width * PREFERRED_MAX_FIG_HEIGHT / height, PREFERRED_MAX_FIG_HEIGHT)
 
     @classmethod
-    def create_from_file(grid_class, grid_file, xy_limits=None, figsize=None):
+    def create_from_file(grid_class, grid_file, figsize=None):
         gfile = open(grid_file)
-        grid = grid_class.create_from_str(gfile.read(), xy_limits=xy_limits, figsize=figsize)
+        grid = grid_class.create_from_str(gfile.read(), figsize=figsize)
         gfile.close()
         return grid
 
     @classmethod
-    def create_from_str(grid_class, grid_str, xy_limits=None, figsize=None):
+    def create_from_str(grid_class, grid_str, figsize=None):
         # Don't ask.
         def string2value(s):
             string2valueDict = {"0":0, "1":1, "S":7, "G":9, "R":8}
@@ -75,15 +75,24 @@ class Grid(object):
                 if value not in ["0","1","S","G","R"]:
                     raise WrongGridFormat
                 grid_array[col,num_rows-1 - row] = string2value(value)
+                # print "grid[{}, {}] = {}".format(col, num_rows-1-row,grid_array[col,num_rows-1 - row])
 
-        grid = grid_class(num_cols, num_rows, xy_limits, figsize)
+        grid = grid_class(num_cols, num_rows, figsize)
         grid.grid_array = grid_array
 
         return grid
 
+    def clone_template(self):
+        num_cols, num_rows = self.size
+        new_grid = Grid(num_cols, num_rows, self.figsize)
+        return new_grid
+
     @property
     def size(self):
         return self.grid_array.shape
+
+    def get_grid_array(self):
+        return self.grid_array
 
     def get_cell(self, x, y):
         return self.grid_array[x, y]
@@ -123,17 +132,17 @@ class Grid(object):
     def clear(self):
         self.grid_array = np.zeros([self.num_cols, self.num_rows])
 
-    def cell_xy(self, ix, iy):
+    def cell_center(self, ix, iy):
         """Returns the center xy point of the cell."""
         minx, maxx = self.xlimits
         miny, maxy = self.ylimits
-        width, height = self.cell_size
-        return minx + (ix+0.5) * width, miny + (iy+0.5) * height
+        cwidth, cheight = self.cell_size
+        return minx + (ix+0.5) * cwidth, miny + (iy+0.5) * cheight
 
-    def _cell_verts(self, ix, iy):
-        width, height = self.cell_size
-        x, y = self.cell_xy(ix, iy)
-        verts = [(x + ofx*0.5*width, y + ofy*0.5*height) for ofx, ofy in [(-1,-1),(-1,1),(1,1),(1,-1)]]
+    def _cell_vertices(self, ix, iy):
+        cwidth, cheight = self.cell_size
+        x, y = self.cell_center(ix, iy)
+        verts = [(x + ofx*0.5*cwidth, y + ofy*0.5*cheight) for ofx, ofy in [(-1,-1),(-1,1),(1,1),(1,-1)]]
         return verts
 
     def export_to_dict(self):
@@ -149,10 +158,10 @@ class Grid(object):
         minx, maxx = self.xlimits
         miny, maxy = self.ylimits
 
-        width, height = self.cell_size
+        cwidth, cheight = self.cell_size
 
-        x = map(lambda i: minx + width*i, range(cols+1))
-        y = map(lambda i: miny + height*i, range(rows+1))
+        x = map(lambda i: minx + cwidth*i, range(cols+1))
+        y = map(lambda i: miny + cheight*i, range(rows+1))
 
         f = plt.figure(figsize=self.figsize)
 
@@ -173,31 +182,31 @@ class Grid(object):
         return plt.gca()
 
     def draw_obstacles(self, axes):
-        verts = [self._cell_verts(ix, iy) for ix,iy in self.get_cells_of_type(CELL_OBSTACLE)]
+        verts = [self._cell_vertices(ix, iy) for ix,iy in self.get_cells_of_type(CELL_OBSTACLE)]
         collection_recs = PolyCollection(verts, facecolors='r')
         axes.add_collection(collection_recs)
 
     def draw_start_goal(self, axes):
-        start_verts = [self._cell_verts(ix, iy) for ix,iy in self.get_cells_of_type(CELL_START)]
-        goal_verts = [self._cell_verts(ix, iy) for ix,iy in self.get_cells_of_type(CELL_GOAL)]
+        start_verts = [self._cell_vertices(ix, iy) for ix,iy in self.get_cells_of_type(CELL_START)]
+        goal_verts = [self._cell_vertices(ix, iy) for ix,iy in self.get_cells_of_type(CELL_GOAL)]
         collection_recs = PolyCollection(start_verts, facecolors='b')
         axes.add_collection(collection_recs)
         collection_recs = PolyCollection(goal_verts, facecolors='g')
         axes.add_collection(collection_recs)
 
     def draw_robot(self, axes):
-        verts = [self._cell_verts(ix, iy) for ix,iy in self.get_cells_of_type(CELL_ROBOT)]
+        verts = [self._cell_vertices(ix, iy) for ix,iy in self.get_cells_of_type(CELL_ROBOT)]
         collection_recs = PolyCollection(verts, facecolors='pink')
         axes.add_collection(collection_recs)
 
     def draw_cell_circle(self, axes, xy, size=0.5, **kwargs):
         ix, iy = xy
-        x, y = self.cell_xy(ix, iy)
+        x, y = self.cell_center(ix, iy)
         xr, yr = 0.5 * self.cell_size[0], 0.5 * self.cell_size[1]
         axes.add_patch(Ellipse((x,y), xr, yr, **kwargs))
 
     def draw_path(self, axes, path, *args, **kwargs):
-        xy_coords = map(lambda idx: self.cell_xy(*idx), path)
+        xy_coords = map(lambda idx: self.cell_center(*idx), path)
         xx, yy = zip(*xy_coords)
         axes.plot(xx, yy, *args, **kwargs)
 
