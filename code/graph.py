@@ -36,10 +36,13 @@ class Graph(object):
     def __contains__(self, node):
         return node in self._nodes
 
+    def get_all_nodes(self):
+        return self._nodes.copy()
+
     def add_node(self, node):
         """Adds a node to the graph."""
         self._nodes.add(node)
-    
+
     def add_edge(self, node1, node2, weight=1.0, bidirectional=True):
         """Adds an edge between node1 and node2. Adds the nodes to the graph first
         if they don't exist."""
@@ -94,7 +97,7 @@ class Graph(object):
 
         if highlight_edges:
             nx.draw_networkx_edges(nxg, pos, highlight_edges, edge_color='r')
-        
+
         plt.axis('off')
         plt.show()
 
@@ -103,7 +106,7 @@ class Graph(object):
         nx.draw_networkx_edges(nxg, pos, edges, edge_color='r')
         reduced_labels = {(u,v): edge_labels[(u,v)] for u,v,_ in edges}
         nx.draw_networkx_edge_labels(nxg, pos, edge_labels=reduced_labels, font_color='r')
-        
+
         reduced_nodes = set([u for u,_,_ in edges])
         reduced_nodes.update([v for _,v,_ in edges])
         # nx.draw_networkx_nodes(nxg, pos, nodelist=reduced_nodes,  node_color='r')
@@ -115,7 +118,7 @@ class Graph(object):
         nx.draw_networkx_edges(nxg, pos, edges, edge_color='r')
         reduced_labels = {(u,v): edge_labels[(u,v)] for u,v,_ in edges}
         nx.draw_networkx_edge_labels(nxg, pos, edge_labels=reduced_labels, font_color='r')
-        
+
         reduced_nodes = set([u for u,_,_ in edges])
         reduced_nodes.update([v for _,v,_ in edges])
         # nx.draw_networkx_nodes(nxg, pos, nodelist=reduced_nodes,  node_color='r')

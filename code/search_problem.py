@@ -15,8 +15,8 @@ class IncrementalSearchProblem(object):
         repr_world = self._world if len(self._world) == 0 else "{...}"
         return "{}(start_node={}, goal_node={}, world={})".format(type(self).__name__, repr(self._start_node), repr(self._goal_node), repr_world)
 
-    def get_graph(self, robot_location):
-        return self._world[robot_location]
+    def get_graph(self):
+        return self._world.belief
 
     def draw_state(self, grid, start=None, goal=None, robot_location=None, path=None):
         axes = grid.draw()

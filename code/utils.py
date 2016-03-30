@@ -55,17 +55,8 @@ def some(predicate, seq):
         if px: return px
     return False
 
-class Queue:
-    """Queue is an abstract class/interface. There are three types:
-        Stack(): A Last In First Out Queue.
-        FIFOQueue(): A First In First Out Queue.
-        PriorityQueue(order, f): Queue in sorted order (default min-first).
-    Each type supports the following methods and functions:
-        q.append(item)  -- add an item to the queue
-        q.extend(items) -- equivalent to: for item in items: q.append(item)
-        q.pop()         -- return the top item from the queue
-        len(q)          -- number of items in q (also q.__len())
-        item in q       -- does q contain item?
+class Queue: #todo clean up docstring
+    """Queue is an abstract class/interface.
     Note that isinstance(Stack(), Queue) is false, because we implement stacks
     as lists.  If Python ever gets interfaces, Queue will be an interface."""
 
@@ -73,30 +64,50 @@ class Queue:
         abstract
 
     def extend(self, items):
-        for item in items: self.append(item)
+        for item in items: self.insert(item)
 
 class PriorityQueue(Queue):
     """A queue in which the minimum (or maximum) element (as determined by f and
     order) is returned first. If order is min, the item with minimum f(x) is
     returned first; if order is max, then it is the item with maximum f(x).
-    Also supports dict-like lookup."""
+    Also supports dict-like lookup.
+
+    PriorityQueue(order, f): Queue in sorted order (default min-first).
+
+    Supports the following methods and functions:
+        q.insert(item)  -- add an item to the queue
+        q.extend(items) -- equivalent to: for item in items: q.insert(item)
+        q.pop()         -- return the top item from the queue
+        len(q)          -- number of items in q (also q.__len())
+        item in q       -- does q contain item?
+    """ #todo clean up docstring
     def __init__(self, order=min, f=lambda x: x):
         update(self, A=[], order=order, f=f)
-    def append(self, item):
+
+    def insert(self, item):
         bisect.insort(self.A, (self.f(item), item))
-    def __len__(self):
-        return len(self.A)
+
     def pop(self):
         if self.order == min:
             return self.A.pop(0)[1]
         else:
             return self.A.pop()[1]
+
+    def preview(self):
+        "Access the top item on the queue without popping it"
+        return None #TODO
+
+    def __len__(self):
+        return len(self.A)
+
     def __contains__(self, item):
         return some(lambda (_, x): x == item, self.A)
+
     def __getitem__(self, key):
         for _, item in self.A:
             if item == key:
                 return item
+
     def __delitem__(self, key):
         for i, (value, item) in enumerate(self.A):
             if item == key:
