@@ -30,7 +30,7 @@ class Edge(object):
 class Graph(object):
     def __init__(self, node_label_fn=None):
         self._nodes = set()
-        self._edges = dict()
+        self._edges = dict() #maps source nodes to sets of edges
         self.node_label_fn = node_label_fn if node_label_fn else lambda x: x
         self.node_positions = dict()
 
@@ -80,10 +80,44 @@ class Graph(object):
         return map(lambda edge: edge.source if edge.source != node else edge.target,
                    self.node_edges(node))
 
-    def get_edge_weight(self, node1, node2):
-        matching_edges = filter(lambda edge: edge.target == node2,
-                                self.node_edges(node1))
-        return matching_edges[0].weight #todo this assumes only one edge from node1 to node2 exists
+    def get_edge(self, source, target):
+        matching_edges = filter(lambda edge: edge.target == target,
+                                self.node_edges(source))
+        return matching_edges[0] if matching_edges else None #todo this assumes only one edge from node1 to node2 exists
+
+    def get_edge_weight(self, source, target):
+        edge = self.get_edge(source, target)
+        if edge is None:
+            raise ValueError("There is no edge from %s to %s"
+                             % map(str, (source, target)))
+        return edge.weight
+
+    def get_changed_edges(self, other_graph): #todo edit docstring
+        """returns a set of tuples (my_edge, their_edge) containing
+        corresponding pairs of edges that differ between the two graphs"""
+        my_edges = self._edges.copy()
+        their_edges = other_graph._edges.copy()
+        changed_edges = set()
+        for source in my_edges:
+            if source not in their_edges:
+                for edge in my_edges[source]:
+                    changed_edges.add((edge, None))
+
+            for edge in my_edges[source]:
+                if edge in their_edges[source]:
+                    their_edges[source].remove(edge)
+                else:
+                    their_corresponding_edge = other_graph.get_edge(edge.source, edge.target)
+                    if their_corresponding_edge is not None:
+                        changed_edges.add((edge, their_corresponding_edge))
+                        their_edges.remove(their_corresponding_edge)
+                    else:
+                        changed_edges.add((edge, None))
+        for source in their_edges:
+            for remaining_edge in their_edges[source]:
+                changed_edges.add((None, remaining_edge))
+#        my_unique_elements = my_edges.difference(their_edges) #todo rm
+#        their_unique_elements = other_edges.difference(my_edges)
 
     def copy(self):
         return deepcopy(self)

@@ -29,7 +29,7 @@ def dstar_lite(problem):
     def compute_shortest_path():
         print '> COMPUTE SHORTEST PATH'
 #        while True:
-        for x in range(10): #todo change to while True (this is temporary to prevent infinite looping)
+        for x in range(16): #todo change to while True (this is temporary to prevent infinite looping)
             smallest_key = queue.top_key()
             if smallest_key >= calc_key(start) and rhs[start] == g[start]:
                 print '> exiting loop as intended'

@@ -11,9 +11,11 @@ class IncrementalSearchProblem(object):
     def __repr__(self):
         return "{}(start_node={}, goal_node={}, world={})".format(type(self).__name__, repr(self._start_node), repr(self._goal_node), repr(self._world))
 
-    def __str__(self):
-        repr_world = self._world if len(self._world) == 0 else "{...}"
-        return "{}(start_node={}, goal_node={}, world={})".format(type(self).__name__, repr(self._start_node), repr(self._goal_node), repr_world)
+    __str__ = __repr__
+
+#    def __str__(self): #todo rm
+#        repr_world = self._world if len(self._world) == 0 else "{...}"
+#        return "{}(start_node={}, goal_node={}, world={})".format(type(self).__name__, repr(self._start_node), repr(self._goal_node), repr_world)
 
     def get_graph(self):
         return self._world.belief
@@ -45,7 +47,7 @@ class IncrementalSearchProblem(object):
 
 TOLERANCE = 0.01
 
-class World:
+class World: #todo add __str__/__repr__
     """
     A World object represents the belief-state of a robot. In
     particular, a World object stores what the world (as a grid)
