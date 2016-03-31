@@ -1,4 +1,4 @@
-from utils import PriorityQueue
+from queue import PriorityQueue
 
 inf = float("inf")
 
