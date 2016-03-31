@@ -26,8 +26,8 @@ class IncrementalSearchProblem(object):
         if robot_location:
             grid.draw_cell_circle(axes, robot_location, color='red')
 
-    def update_world(self, next_robot_position):
-        return self._world.update_world(next_robot_position)
+    def update_world(self, intended_path):
+        return self._world.update_world(intended_path)
 
     @property
     def start_node(self):

@@ -3,7 +3,13 @@ from search_problem import IncrementalSearchProblem
 from world import World
 from dstar import dstar_lite
 
-grid = Grid(3,5)
+grid_str = """0 0 0
+              S 1 0
+              0 1 0
+              0 0 0
+              0 0 G"""
+grid = Grid.create_from_str(grid_str)
+#grid = Grid(3,5)
 robot_start = (0,3)
 world = World(grid, robot_start, vision_radius=1)
 goal = (2,0)

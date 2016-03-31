@@ -1,6 +1,6 @@
 from utils import PriorityQueue
 
-INF = float("inf")
+inf = float("inf")
 
 #todo this currently only supports undirected graphs
 
@@ -13,12 +13,14 @@ def dstar_lite(problem):
 #        print 'CALC KEY',
         "Returns key as a tuple of two ints"
         min_g_rhs = min([g[node], rhs[node]])
-#        print (min_g_rhs + heuristic((start, node)) + key_modifier, min_g_rhs)
-        return (min_g_rhs + heuristic((start, node)) + key_modifier, min_g_rhs)
+#        print (min_g_rhs + heuristic(start, node) + key_modifier, min_g_rhs)
+        return (min_g_rhs + heuristic(start, node) + key_modifier, min_g_rhs)
 
     def update_vertex(node):
 #        print 'UPDATE VERTEX', node
         if node != goal:
+            if not graph.get_neighbors(node):
+                print 'why no neighbors', node
             rhs[node] = min([graph.get_edge_weight(node, neighbor) + g[neighbor]
                              for neighbor in graph.get_neighbors(node)])
         if node in queue:
@@ -28,14 +30,12 @@ def dstar_lite(problem):
 
     def compute_shortest_path():
         print '> COMPUTE SHORTEST PATH'
-#        while True:
-        for x in range(16): #todo change to while True (this is temporary to prevent infinite looping)
+        while True:
             smallest_key = queue.top_key()
             if smallest_key >= calc_key(start) and rhs[start] == g[start]:
-                print '> exiting loop as intended'
                 return
             node = queue.pop()
-            print '> node:', node
+            print '> node:', node, heuristic(node, start)
             if smallest_key < calc_key(node):
                 queue.insert(node)
             elif g[node] > rhs[node]:
@@ -43,22 +43,20 @@ def dstar_lite(problem):
                 for next_node in graph.get_neighbors(node):
                     update_vertex(next_node)
             else:
-                g[node] = INF
+                g[node] = inf
                 for next_node in graph.get_neighbors(node) + [node]:
                     update_vertex(next_node)
-        print '> time out'
 
     # Initialize
     start = problem.start_node
     goal = problem.goal_node
     graph = problem.get_graph()
 
-    g = {node:INF for node in graph.get_all_nodes()}
-    rhs = {node:INF for node in graph.get_all_nodes()}
+    g = {node:inf for node in graph.get_all_nodes()}
+    rhs = {node:inf for node in graph.get_all_nodes()}
     rhs[goal] = 0
     key_modifier = 0
-#    heuristic = {} #maps keys (node1, node2) to int values #todo
-    heuristic = lambda node_pair: 0 #todo
+    heuristic = lambda node1, node2: max((abs(node1[0]-node2[0]), abs(node1[1]-node2[1]))) #todo move to grid class?
 
     queue = PriorityQueue(f=lambda node: calc_key(node))
     queue.insert(goal)
@@ -69,20 +67,30 @@ def dstar_lite(problem):
     compute_shortest_path()
 
     while start != goal:
-        if g[start] == INF:
-            return "no path found" #todo return something useful
+        print start #to print robot path #todo rm
+        if g[start] == inf:
+            print "no path found" #todo rm
+            return problem
         start = min(graph.get_neighbors(start),
                     key = lambda neighbor: (graph.get_edge_weight(start, neighbor)
                                             + g[neighbor]))
         old_graph = graph.copy()
-        graph = problem.update_world(start)
-        changed_edges = graph.get_changed_edges(old_graph)
+        graph = problem.update_world([start]) #todo track intended path (maybe keep track of pointer for each node?)
+#        print "\nold edges\n", old_graph._edges
+#        print "\nnew edges\n", graph._edges
+        changed_edges = old_graph.get_changed_edges(graph)
+#        return #todo rm
         if changed_edges:
             key_modifier = key_modifier + heuristic(last_start, start)
             last_start = start
-            for edge in changed_edges:
-                update_vertex(edge.source)
-                update_vertex(edge.target)
+            for (old_edge, new_edge) in changed_edges:
+                if old_edge and new_edge: #edge simply changed weight
+                    update_vertex(old_edge.source)
+                    update_vertex(old_edge.target)
+                elif not old_edge: #new edge was added
+                    raise NotImplementedError("Edge addition not yet supported")
+                else: #old edge was deleted
+                    raise NotImplementedError("Edge deletion not yet supported")
             compute_shortest_path()
     return problem #contains path traversed and other info
 

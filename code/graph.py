@@ -110,14 +110,14 @@ class Graph(object):
                     their_corresponding_edge = other_graph.get_edge(edge.source, edge.target)
                     if their_corresponding_edge is not None:
                         changed_edges.add((edge, their_corresponding_edge))
-                        their_edges.remove(their_corresponding_edge)
+                        their_edges[source].remove(their_corresponding_edge)
                     else:
                         changed_edges.add((edge, None))
         for source in their_edges:
             for remaining_edge in their_edges[source]:
                 changed_edges.add((None, remaining_edge))
-#        my_unique_elements = my_edges.difference(their_edges) #todo rm
-#        their_unique_elements = other_edges.difference(my_edges)
+        print '\nchanged_edges', changed_edges #todo rm
+        return changed_edges
 
     def copy(self):
         return deepcopy(self)

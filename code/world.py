@@ -2,7 +2,7 @@ from grid import *
 
 TOLERANCE = 0.01
 
-class World: #todo add __str__/__repr__ #todo move into world.py
+class World: #todo add __str__/__repr__
 #todo add is_at_goal flag
 #todo assumptions: world can change, but give up if currently can't reach goal
 #obstacles may appear/disappear/move, but they will never crush the robot
@@ -88,7 +88,7 @@ class World: #todo add __str__/__repr__ #todo move into world.py
         # Graph-ify the belief state and return it
         return self.belief
 
-    def _update_ground_truth(intended_path):
+    def _update_ground_truth(self, intended_path):
         # TODO: MAKE SURE that this method does not put an obstacle at
         #  grid[intended_path[0]]. That is to say, an obstacle should NEVER
         #  be formed on the robot's new (updated) location.
