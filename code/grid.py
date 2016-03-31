@@ -30,6 +30,17 @@ CELL_ROBOT = 8
 CELL_GOAL = 9
 VALID_CELL_TYPES = [CELL_FREE, CELL_OBSTACLE, CELL_START, CELL_ROBOT, CELL_GOAL]
 
+COLOR = { \
+    "free": "white", \
+    "obstacle": "#555555", \
+    "new-obstacle": "None", \
+    "robot": "black", \
+    "start": "green", \
+    "goal": "red", \
+    "path-travelled": "red", \
+    "path-future": "blue"
+    }
+
 class Grid(object):
     def __init__(self, num_cols=10, num_rows=10, figsize=None):
         self.generate_grid(num_cols, num_rows)
@@ -182,21 +193,22 @@ class Grid(object):
 
     def draw_obstacles(self, axes):
         verts = [self._cell_vertices(ix, iy) for ix,iy in self.get_cells_of_type(CELL_OBSTACLE)]
-        collection_recs = PolyCollection(verts, facecolors='r')
+        collection_recs = PolyCollection(verts, facecolors=COLOR["obstacle"])
         axes.add_collection(collection_recs)
 
     def draw_start_goal(self, axes):
         start_verts = [self._cell_vertices(ix, iy) for ix,iy in self.get_cells_of_type(CELL_START)]
         goal_verts = [self._cell_vertices(ix, iy) for ix,iy in self.get_cells_of_type(CELL_GOAL)]
-        collection_recs = PolyCollection(start_verts, facecolors='b')
+        collection_recs = PolyCollection(start_verts, facecolors=COLOR["start"])
         axes.add_collection(collection_recs)
-        collection_recs = PolyCollection(goal_verts, facecolors='g')
+        collection_recs = PolyCollection(goal_verts, facecolors=COLOR["goal"])
         axes.add_collection(collection_recs)
 
     def draw_robot(self, axes):
-        verts = [self._cell_vertices(ix, iy) for ix,iy in self.get_cells_of_type(CELL_ROBOT)]
-        collection_recs = PolyCollection(verts, facecolors='pink')
-        axes.add_collection(collection_recs)
+        self.draw_cell_circle(axes, self.get_cells_of_type(CELL_ROBOT)[0], color=COLOR["robot"])
+        # verts = [self._cell_vertices(ix, iy) for ix,iy in self.get_cells_of_type(CELL_ROBOT)]
+        # collection_recs = PolyCollection(verts, facecolors=COLOR["robot"])
+        # axes.add_collection(collection_recs)
 
     def draw_cell_circle(self, axes, xy, size=0.5, **kwargs):
         ix, iy = xy

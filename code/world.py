@@ -20,7 +20,7 @@ class World: #todo add __str__/__repr__ #todo move into world.py
     The only way to mutate anything in this class is via the update_world
     method.
     """
-    def __init__(self, init_grid_ground_truth, robot_start_position, vision_radius=3):
+    def __init__(self, init_grid_ground_truth, robot_start_position, vision_radius=2):
         # The radius the robot can "see" for its belief state
         self._VISION_RADIUS = vision_radius
 
