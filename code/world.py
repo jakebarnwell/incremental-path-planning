@@ -168,6 +168,13 @@ class World: #todo add __str__/__repr__
     #
     #     return axes
 
+    def draw_all_path(self, time_step = 1):
+	for time_index in range(0,self.time):
+		temp =	self.draw(at_time=time_index) 
+		display.display(temp.get_figure())
+		display.clear_output(wait=True)
+    		time_library.sleep(time_step)	
+
     @property
     def robot_position(self):
         return self._robot_position

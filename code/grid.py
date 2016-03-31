@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection, PolyCollection
 from matplotlib.patches import Ellipse
 from graph import Graph
+import time as time_library
+from IPython import display
 
 
 class WrongGridFormat(Exception):
