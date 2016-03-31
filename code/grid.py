@@ -26,16 +26,15 @@ PREFERRED_MAX_FIG_HEIGHT = 8
 CELL_FREE = 0
 CELL_OBSTACLE = 1
 CELL_START = 7
-CELL_ROBOT = 8
 CELL_GOAL = 9
-VALID_CELL_TYPES = [CELL_FREE, CELL_OBSTACLE, CELL_START, CELL_ROBOT, CELL_GOAL]
+VALID_CELL_TYPES = [CELL_FREE, CELL_OBSTACLE, CELL_START, CELL_GOAL]
 
 COLOR = { \
     "free": "white", \
     "obstacle": "#555555", \
     "new-obstacle": "None", \
     "robot": "black", \
-    "start": "green", \
+    "start": "#00DD44", \
     "goal": "red", \
     "path-travelled": "red", \
     "path-future": "blue"
@@ -69,7 +68,7 @@ class Grid(object):
     def create_from_str(grid_class, grid_str, figsize=None):
         # Don't ask.
         def string2value(s):
-            string2valueDict = {"0":0, "1":1, "S":7, "G":9, "R":8}
+            string2valueDict = {"0":0, "1":1, "S":7, "G":9}
             return string2valueDict[s]
 
         lines = map(str.split, filter(lambda s:not s.startswith('#') and len(s)>0, map(str.strip,grid_str.split('\n'))))
@@ -185,18 +184,17 @@ class Grid(object):
         ax.set_ylim(y[0]-1, y[-1]+1)
         plt.gca().set_aspect('equal', adjustable='box')
         plt.axis('off')
-        self.draw_obstacles(plt.gca())
-        self.draw_start_goal(plt.gca())
-        self.draw_robot(plt.gca())
+        self._draw_obstacles(plt.gca())
+        self._draw_start_goal(plt.gca())
 
         return plt.gca()
 
-    def draw_obstacles(self, axes):
+    def _draw_obstacles(self, axes):
         verts = [self._cell_vertices(ix, iy) for ix,iy in self.get_cells_of_type(CELL_OBSTACLE)]
         collection_recs = PolyCollection(verts, facecolors=COLOR["obstacle"])
         axes.add_collection(collection_recs)
 
-    def draw_start_goal(self, axes):
+    def _draw_start_goal(self, axes):
         start_verts = [self._cell_vertices(ix, iy) for ix,iy in self.get_cells_of_type(CELL_START)]
         goal_verts = [self._cell_vertices(ix, iy) for ix,iy in self.get_cells_of_type(CELL_GOAL)]
         collection_recs = PolyCollection(start_verts, facecolors=COLOR["start"])
@@ -204,16 +202,10 @@ class Grid(object):
         collection_recs = PolyCollection(goal_verts, facecolors=COLOR["goal"])
         axes.add_collection(collection_recs)
 
-    def draw_robot(self, axes):
-        self.draw_cell_circle(axes, self.get_cells_of_type(CELL_ROBOT)[0], color=COLOR["robot"])
-        # verts = [self._cell_vertices(ix, iy) for ix,iy in self.get_cells_of_type(CELL_ROBOT)]
-        # collection_recs = PolyCollection(verts, facecolors=COLOR["robot"])
-        # axes.add_collection(collection_recs)
-
-    def draw_cell_circle(self, axes, xy, size=0.5, **kwargs):
+    def draw_cell_circle(self, axes, xy, size=0.6, **kwargs):
         ix, iy = xy
         x, y = self.cell_center(ix, iy)
-        xr, yr = 0.5 * self.cell_size[0], 0.5 * self.cell_size[1]
+        xr, yr = size * self.cell_size[0], size * self.cell_size[1]
         axes.add_patch(Ellipse((x,y), xr, yr, **kwargs))
 
     def draw_path(self, axes, path, *args, **kwargs):

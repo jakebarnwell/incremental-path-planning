@@ -34,7 +34,14 @@ class World: #todo add __str__/__repr__ #todo move into world.py
 
         # Stores what the robot "sees" or "believes" to be the world currently
         self._grid_belief_state = init_grid_ground_truth.clone_template()
+        self._init_belief_state()
         self._update_belief_state()
+
+        # Stores history of belief states and ground truths. The 0th element is
+        #  the initial state that this World object was constructed with, and
+        #  the last element is the current state.
+        self._history_belief_state = [self._grid_belief_state]
+        self._history_ground_truth = [self._grid_ground_truth]
 
 
     def update_world(self, next_robot_position):
@@ -45,12 +52,8 @@ class World: #todo add __str__/__repr__ #todo move into world.py
         self._time += 1
         self._path_travelled.append(next_robot_position)
 
-        # Update ground truth, e.g. if there are moving obstacles. Note that
-        #  we must update the robot's position in the grid as well.
-        rx, ry = self._robot_position
-        nrx, nry = next_robot_position
-        self._grid_ground_truth.mark_cell_as(nrx, nry, CELL_ROBOT)
-        self._grid_ground_truth.mark_cell_as(rx, ry, CELL_FREE)
+        # Update ground truth, e.g. if there are moving obstacles.
+        pass
 
         # Store new robot position. Must happen before _update_belief_state
         #  is called.
@@ -60,8 +63,26 @@ class World: #todo add __str__/__repr__ #todo move into world.py
         #  is set.
         self._update_belief_state()
 
+        # Store the new belief state and ground truth into history
+        self._history_belief_state.append(self._grid_belief_state)
+        self._history_ground_truth.append(self._grid_ground_truth)
+
         # Graph-ify the belief state and return it
         return self.belief
+
+    def _init_belief_state(self):
+        """
+        Initializes belief state by forcing it to know the start and goal cells,
+        as required by D* Lite.
+        """
+        truth = self._grid_ground_truth
+        start_cells = truth.get_cells_of_type(CELL_START)
+        goal_cells = truth.get_cells_of_type(CELL_GOAL)
+
+        for start in start_cells:
+            self._grid_belief_state.set_cell(start[0], start[1], CELL_START)
+        for goal in goal_cells:
+            self._grid_belief_state.set_cell(goal[0], goal[1], CELL_GOAL)
 
     def _update_belief_state(self):
         """
@@ -69,7 +90,6 @@ class World: #todo add __str__/__repr__ #todo move into world.py
         information typically depends on the robot's position,
         e.g. what the robot can "see" from where it's at.
         """
-        ground_truth_grid_array = self._grid_ground_truth.get_grid_array()
         num_cols, num_rows = self._grid_ground_truth.size
         rx, ry = self._grid_ground_truth.cell_center(*self._robot_position)
         for col in xrange(num_cols):
@@ -77,7 +97,6 @@ class World: #todo add __str__/__repr__ #todo move into world.py
                 x, y = self._grid_ground_truth.cell_center(col, row)
                 if (rx - x)**2 + (ry - y)**2 <= (self._VISION_RADIUS * (1 + TOLERANCE))**2:
                     self._grid_belief_state.set_cell(col, row, self._grid_ground_truth.get_cell(col,row))
-                    # print "Visible {} --> {}: {}".format(self._robot_position, (col, row), self._grid_ground_truth.get_cell(col,row))
                 else:
                     pass
                     # Instead of overwriting e.g. "0"s (free cell) to every cell that
@@ -86,6 +105,27 @@ class World: #todo add __str__/__repr__ #todo move into world.py
                     #  no longer "nearby" that cell. Hence, if that cell has CHANGED,
                     #  the robot doesn't know that.
         return True
+
+    def draw(self, ground_truth=False):
+        """
+        Draws the current grid representation of this World. This drawing includes
+        information about obstacles, start/goal nodes, and the robot's current
+        position, as well as the robot's path so far and its currently intended
+        future path, if applicable.
+        """
+        grid = self._grid_belief_state if not ground_truth else self._grid_ground_truth
+        axes = grid.draw()
+        grid.draw_cell_circle(axes, self._robot_position, color=COLOR["robot"])
+
+        return axes
+
+    @staticmethod
+    def draw_grid(what_grid, robot_position):
+        grid = what_grid
+        axes = grid.draw()
+        grid.draw_cell_circle(axes, robot_position, color=COLOR["robot"])
+
+        return axes
 
     @property
     def robot_position(self):
@@ -109,7 +149,15 @@ class World: #todo add __str__/__repr__ #todo move into world.py
     @property
     def belief_grid(self):
         """
-        Returns current belief state as a grid. Helpful if you want to draw
-        pretty grids.
+        Returns current belief state as a grid. If you're only calling this to draw
+        the grid, instead consider calling world.draw()
         """
         return self._grid_belief_state
+
+    @property
+    def belief_history(self):
+        return self._history_belief_state
+
+    @property
+    def ground_truth_history(self):
+        return self._history_ground_truth
