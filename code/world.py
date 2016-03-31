@@ -27,7 +27,7 @@ class World: #todo add __str__/__repr__ #todo move into world.py
         # The current time step, robot's position, and path travelled so far
         self._time = 0
         self._robot_position = robot_start_position
-        self._path_travelled = []
+        self._path_travelled = [robot_start_position]
 
         # Stores what the world really looks like currently
         self._grid_ground_truth = init_grid_ground_truth
@@ -43,17 +43,32 @@ class World: #todo add __str__/__repr__ #todo move into world.py
         self._history_belief_state = [self._grid_belief_state]
         self._history_ground_truth = [self._grid_ground_truth]
 
+        # Stores history of "future paths" for the robot. These future paths
+        #  are ones supplied in each update_world call, e.g. from the D* Lite
+        #  algorithm execution.
+        self._history_intended_path = [[]]
 
-    def update_world(self, next_robot_position):
+    def update_world(self, intended_path):
         """
         Updates the ground truth grid AND the belief state grid,
         and returns a GRAPH-version of the belief state.
+
+        Takes argument intended_path, which is the intended path of the robot
+        starting at the new robot's position. For example, if the robot's new
+        position should be (3, 4), then intended_path should be of the form
+        [(3,4), ..., (gx,gy)] where (gx,gy) is the goal state, and the entire
+        path represents the path that the algorithm has calculated for the
+        robot at this time step.
         """
+        if len(intended_path) < 1:
+            raise ValueError("Intended path must be of length at least 1.")
+        next_robot_position = intended_path[0]
+
         self._time += 1
         self._path_travelled.append(next_robot_position)
 
         # Update ground truth, e.g. if there are moving obstacles.
-        pass
+        self._update_ground_truth(intended_path)
 
         # Store new robot position. Must happen before _update_belief_state
         #  is called.
@@ -67,8 +82,17 @@ class World: #todo add __str__/__repr__ #todo move into world.py
         self._history_belief_state.append(self._grid_belief_state)
         self._history_ground_truth.append(self._grid_ground_truth)
 
+        # Store future path in future path history
+        self._history_intended_path.append(intended_path)
+
         # Graph-ify the belief state and return it
         return self.belief
+
+    def _update_ground_truth(intended_path):
+        # TODO: MAKE SURE that this method does not put an obstacle at
+        #  grid[intended_path[0]]. That is to say, an obstacle should NEVER
+        #  be formed on the robot's new (updated) location.
+        pass
 
     def _init_belief_state(self):
         """
@@ -112,6 +136,12 @@ class World: #todo add __str__/__repr__ #todo move into world.py
         information about obstacles, start/goal nodes, and the robot's current
         position, as well as the robot's path so far and its currently intended
         future path, if applicable.
+
+        To draw the ground_truth world instead of the robot's viewpoint of
+        the world, use ground_true=True.
+
+        To draw the world as it was at some earlier point in time, use
+        at_time=t where t is whatever time point you are interested in (0 <= t <= now).
         """
         time = at_time if at_time else self._time
         if time < 0 or time >= len(self._history_belief_state):
@@ -119,18 +149,24 @@ class World: #todo add __str__/__repr__ #todo move into world.py
             format(time, self._time))
         grid_list = self._history_belief_state if not ground_truth else self._history_ground_truth
         grid = grid_list[time]
-        axes = grid.draw()
-        grid.draw_cell_circle(axes, self._robot_position, color=COLOR["robot"])
+        future_path = self._history_intended_path[time]
+        path_travelled = self._path_travelled[0:time+1]
+        robot_position = self._path_travelled[time]
 
-        return axes
-
-    @staticmethod
-    def draw_grid(what_grid, robot_position):
-        grid = what_grid
         axes = grid.draw()
         grid.draw_cell_circle(axes, robot_position, color=COLOR["robot"])
+        grid.draw_path(axes, future_path, color=COLOR["path-future"], linewidth=2, linestyle="dashed")
+        grid.draw_path(axes, path_travelled, color=COLOR["path-travelled"], linewidth=3)
 
         return axes
+
+    # @staticmethod
+    # def draw_grid(what_grid, robot_position, path_travelled, intended_path):
+    #     grid = what_grid
+    #     axes = grid.draw()
+    #     grid.draw_cell_circle(axes, robot_position, color=COLOR["robot"])
+    #
+    #     return axes
 
     @property
     def robot_position(self):

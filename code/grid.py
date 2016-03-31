@@ -31,13 +31,13 @@ VALID_CELL_TYPES = [CELL_FREE, CELL_OBSTACLE, CELL_START, CELL_GOAL]
 
 COLOR = { \
     "free": "white", \
-    "obstacle": "#555555", \
+    "obstacle": "#333333", \
     "new-obstacle": "None", \
     "robot": "black", \
     "start": "#00DD44", \
     "goal": "red", \
-    "path-travelled": "red", \
-    "path-future": "blue"
+    "path-travelled": "green", \
+    "path-future": "#DD0000"
     }
 
 class Grid(object):
@@ -209,9 +209,11 @@ class Grid(object):
         axes.add_patch(Ellipse((x,y), xr, yr, **kwargs))
 
     def draw_path(self, axes, path, *args, **kwargs):
-        xy_coords = map(lambda idx: self.cell_center(*idx), path)
-        xx, yy = zip(*xy_coords)
-        axes.plot(xx, yy, *args, **kwargs)
+        # Path doesn't really make sense for 1 or 0 vertices
+        if len(path) > 1:
+            xy_coords = map(lambda idx: self.cell_center(*idx), path)
+            xx, yy = zip(*xy_coords)
+            axes.plot(xx, yy, *args, **kwargs)
 
     def to_graph(self):
         xmin, xmax = self.xlimits
