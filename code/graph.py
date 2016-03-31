@@ -95,8 +95,8 @@ class Graph(object):
     def get_changed_edges(self, other_graph): #todo edit docstring
         """returns a set of tuples (my_edge, their_edge) containing
         corresponding pairs of edges that differ between the two graphs"""
-        my_edges = self._edges.copy()
-        their_edges = other_graph._edges.copy()
+        my_edges = deepcopy(self._edges)
+        their_edges = deepcopy(other_graph._edges)
         changed_edges = set()
         for source in my_edges:
             if source not in their_edges:
@@ -116,7 +116,7 @@ class Graph(object):
         for source in their_edges:
             for remaining_edge in their_edges[source]:
                 changed_edges.add((None, remaining_edge))
-        print '\nchanged_edges', changed_edges #todo rm
+#        print '\nchanged_edges', changed_edges #todo rm
         return changed_edges
 
     def copy(self):

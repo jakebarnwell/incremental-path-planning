@@ -10,17 +10,19 @@ def dstar_lite(problem):
     start, goal, graph, queue, key_modifier, heuristic, g, rhs = [None]*8
 
     def calc_key(node):
-#        print 'CALC KEY',
         "Returns key as a tuple of two ints"
         min_g_rhs = min([g[node], rhs[node]])
-#        print (min_g_rhs + heuristic(start, node) + key_modifier, min_g_rhs)
         return (min_g_rhs + heuristic(start, node) + key_modifier, min_g_rhs)
 
     def update_vertex(node):
-#        print 'UPDATE VERTEX', node
         if node != goal:
-            if not graph.get_neighbors(node):
-                print 'why no neighbors', node
+#            if not graph.get_neighbors(node):
+#                print '\nwhy no neighbors', node
+#                print problem.get_graph()._edges[(1,2)]
+#                print graph._edges[(1,2)]
+#                print graph._edges
+#            else:
+#                print node, graph.get_neighbors(node)
             rhs[node] = min([graph.get_edge_weight(node, neighbor) + g[neighbor]
                              for neighbor in graph.get_neighbors(node)])
         if node in queue:
@@ -67,7 +69,7 @@ def dstar_lite(problem):
     compute_shortest_path()
 
     while start != goal:
-        print start #to print robot path #todo rm
+        print 'robot at:', start #to print robot path #todo rm
         if g[start] == inf:
             print "no path found" #todo rm
             return problem
@@ -76,6 +78,9 @@ def dstar_lite(problem):
                                             + g[neighbor]))
         old_graph = graph.copy()
         graph = problem.update_world([start]) #todo track intended path (maybe keep track of pointer for each node?)
+#        print '!!!!!', graph._edges
+#        x = problem.get_graph()
+#        print graph == x
 #        print "\nold edges\n", old_graph._edges
 #        print "\nnew edges\n", graph._edges
         changed_edges = old_graph.get_changed_edges(graph)
@@ -92,5 +97,6 @@ def dstar_lite(problem):
                 else: #old edge was deleted
                     raise NotImplementedError("Edge deletion not yet supported")
             compute_shortest_path()
+    print 'robot at:', start
     return problem #contains path traversed and other info
 

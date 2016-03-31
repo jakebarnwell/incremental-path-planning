@@ -1,3 +1,4 @@
+''' todo: remove this class?
 class SearchNode(object):
     def __init__(self, state, parent_node=None, cost=0.0, action=None):
         self._parent = parent_node
@@ -32,12 +33,13 @@ class SearchNode(object):
     def action(self):
         """Get the action that was taken to get from parent to the state represented by this node."""
         return self._action
-    
+
     def __eq__(self, other):
         return isinstance(other, SearchNode) and self._state == other._state
 
     def __hash__(self):
         return hash(self._state)
+'''
 
 class Path(object):
     """This class computes the path from the starting state until the state specified by the search_node

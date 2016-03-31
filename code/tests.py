@@ -9,7 +9,6 @@ grid_str = """0 0 0
               0 0 0
               0 0 G"""
 grid = Grid.create_from_str(grid_str)
-#grid = Grid(3,5)
 robot_start = (0,3)
 world = World(grid, robot_start, vision_radius=1)
 goal = (2,0)
