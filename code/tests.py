@@ -10,7 +10,7 @@ grid_str = """0 0 0
               0 0 G"""
 grid = Grid.create_from_str(grid_str)
 robot_start = (0,3)
-world = World(grid, robot_start, vision_radius=1)
+world = World(grid, robot_start, vision_radius=1.5)
 goal = (2,0)
 
 problem = IncrementalSearchProblem(world, robot_start, goal)

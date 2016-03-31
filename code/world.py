@@ -20,7 +20,7 @@ class World: #todo add __str__/__repr__
     The only way to mutate anything in this class is via the update_world
     method.
     """
-    def __init__(self, init_grid_ground_truth, robot_start_position, vision_radius=2):
+    def __init__(self, init_grid_ground_truth, robot_start_position, vision_radius=1.5):
         # The radius the robot can "see" for its belief state
         self._VISION_RADIUS = vision_radius
 
@@ -169,11 +169,11 @@ class World: #todo add __str__/__repr__
     #     return axes
 
     def draw_all_path(self, time_step = 1):
-	for time_index in range(0,self.time):
-		temp =	self.draw(at_time=time_index) 
-		display.display(temp.get_figure())
-		display.clear_output(wait=True)
-    		time_library.sleep(time_step)	
+        for time_index in range(0,self.time):
+            temp = self.draw(at_time=time_index)
+            display.display(temp.get_figure())
+            display.clear_output(wait=True)
+            time_library.sleep(time_step)
 
     @property
     def robot_position(self):

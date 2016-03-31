@@ -52,6 +52,8 @@ class PriorityQueue(Queue):
         bisect.insort(self.A, (self.f(item), item))
 
     def pop(self):
+        if not self.A:
+            raise IndexError("queue is empty; can't pop")
         if self.order == min:
             return self.A.pop(0)[1]
         else:
@@ -61,12 +63,12 @@ class PriorityQueue(Queue):
         "removes all instances of item from the queue"
         self.__delitem__(item)
 
-    def top_key(self): #todo this is inefficient
+    def top_key(self):
         "Get the key corresponding to the next item to be popped"
-        next_item = self.pop()
-        key = self.f(next_item)
-        self.insert(next_item)
-        return key
+        if not self.A:
+            raise IndexError("queue is empty; no top key")
+        next_item = self.A[0][1]
+        return self.f(next_item)
 
     def __len__(self):
         return len(self.A)

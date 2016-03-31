@@ -16,13 +16,6 @@ def dstar_lite(problem):
 
     def update_vertex(node):
         if node != goal:
-#            if not graph.get_neighbors(node):
-#                print '\nwhy no neighbors', node
-#                print problem.get_graph()._edges[(1,2)]
-#                print graph._edges[(1,2)]
-#                print graph._edges
-#            else:
-#                print node, graph.get_neighbors(node)
             rhs[node] = min([graph.get_edge_weight(node, neighbor) + g[neighbor]
                              for neighbor in graph.get_neighbors(node)])
         if node in queue:
@@ -67,9 +60,9 @@ def dstar_lite(problem):
 
     # Begin algorithm
     compute_shortest_path()
+    print 'robot starting at:', start
 
     while start != goal:
-        print 'robot at:', start #to print robot path #todo rm
         if g[start] == inf:
             print "no path found" #todo rm
             return problem
@@ -77,14 +70,10 @@ def dstar_lite(problem):
                     key = lambda neighbor: (graph.get_edge_weight(start, neighbor)
                                             + g[neighbor]))
         old_graph = graph.copy()
+        print 'robot moving to:', start
         graph = problem.update_world([start]) #todo track intended path (maybe keep track of pointer for each node?)
-#        print '!!!!!', graph._edges
-#        x = problem.get_graph()
-#        print graph == x
-#        print "\nold edges\n", old_graph._edges
-#        print "\nnew edges\n", graph._edges
         changed_edges = old_graph.get_changed_edges(graph)
-#        return #todo rm
+#        print changed_edges #todo rm
         if changed_edges:
             key_modifier = key_modifier + heuristic(last_start, start)
             last_start = start
