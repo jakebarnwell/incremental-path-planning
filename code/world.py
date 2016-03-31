@@ -106,14 +106,19 @@ class World: #todo add __str__/__repr__ #todo move into world.py
                     #  the robot doesn't know that.
         return True
 
-    def draw(self, ground_truth=False):
+    def draw(self, ground_truth=False, at_time=None):
         """
         Draws the current grid representation of this World. This drawing includes
         information about obstacles, start/goal nodes, and the robot's current
         position, as well as the robot's path so far and its currently intended
         future path, if applicable.
         """
-        grid = self._grid_belief_state if not ground_truth else self._grid_ground_truth
+        time = at_time if at_time else self._time
+        if time < 0 or time >= len(self._history_belief_state):
+            raise ValueError("Invalid time. You supplied time={}. Time must be non-negative and no more than the current time t={}". \
+            format(time, self._time))
+        grid_list = self._history_belief_state if not ground_truth else self._history_ground_truth
+        grid = grid_list[time]
         axes = grid.draw()
         grid.draw_cell_circle(axes, self._robot_position, color=COLOR["robot"])
 
