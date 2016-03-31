@@ -6,7 +6,7 @@ from dstar import dstar_lite
 grid_str = """0 0 0
               S 1 0
               0 1 0
-              0 0 0
+              0 1 0
               0 0 G"""
 grid = Grid.create_from_str(grid_str)
 robot_start = (0,3)

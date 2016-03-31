@@ -37,7 +37,7 @@ def dstar_lite(problem):
             if smallest_key >= calc_key(start) and rhs[start] == g[start]:
                 return
             node = queue.pop()
-            print '> node:', node, heuristic(node, start)
+            print '> dequeue node', node, 'with h =', heuristic(node, start)
             if smallest_key < calc_key(node):
                 queue.insert(node)
             elif g[node] > rhs[node]:
