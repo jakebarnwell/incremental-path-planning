@@ -1,5 +1,4 @@
 from grid import *
-from world import World #todo is this necessary?
 
 class IncrementalSearchProblem(object):
     # For now we have a dict mapping robot (x,y) --> Graph, i.e. its understanding

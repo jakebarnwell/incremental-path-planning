@@ -64,16 +64,17 @@ def dstar_lite(problem):
 
     while start != goal:
         if g[start] == inf:
-            print "no path found" #todo rm
+            print "no path found"
             return problem
         start = min(graph.get_neighbors(start),
                     key = lambda neighbor: (graph.get_edge_weight(start, neighbor)
                                             + g[neighbor]))
         old_graph = graph.copy()
         print 'robot moving to:', start
-        graph = problem.update_world([start]) #todo track intended path (maybe keep track of pointer for each node?)
+        intended_path = build_intended_path(start, goal, graph, g)
+        print 'intended path:', intended_path
+        graph = problem.update_world(intended_path)
         changed_edges = old_graph.get_changed_edges(graph)
-#        print changed_edges #todo rm
         if changed_edges:
             key_modifier = key_modifier + heuristic(last_start, start)
             last_start = start
@@ -89,3 +90,11 @@ def dstar_lite(problem):
     print 'robot at:', start
     return problem #contains path traversed and other info
 
+def build_intended_path(next_step, goal, graph, g_values):
+    """Uses g-values to reconstruct future planned path given intended next
+    step.  Returns a path as a list [next_step, ... , goal]"""
+    path = [next_step]
+    while path[-1] != goal:
+        path.append(min(graph.get_neighbors(path[-1]),
+                        key=lambda node: g_values[node]))
+    return path

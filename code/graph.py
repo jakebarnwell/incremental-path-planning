@@ -1,4 +1,3 @@
-#import pydot_ng as pydot
 import networkx as nx
 import matplotlib.pyplot as plt
 from copy import deepcopy
@@ -71,18 +70,18 @@ class Graph(object):
             raise NodeNotInGraph(node)
         return self.node_positions[node]
 
-    def node_edges(self, node): #todo is this only outgoing edges?
+    def get_outgoing_edges(self, node):
         if not node in self:
             raise NodeNotInGraph(node)
         return self._edges.get(node, set())
 
     def get_neighbors(self, node): #todo probably inefficient #todo this is undirected
         return map(lambda edge: edge.source if edge.source != node else edge.target,
-                   self.node_edges(node))
+                   self.get_outgoing_edges(node))
 
     def get_edge(self, source, target):
         matching_edges = filter(lambda edge: edge.target == target,
-                                self.node_edges(source))
+                                self.get_outgoing_edges(source))
         return matching_edges[0] if matching_edges else None #todo this assumes only one edge from node1 to node2 exists
 
     def get_edge_weight(self, source, target):
@@ -116,7 +115,6 @@ class Graph(object):
         for source in their_edges:
             for remaining_edge in their_edges[source]:
                 changed_edges.add((None, remaining_edge))
-#        print '\nchanged_edges', changed_edges #todo rm
         return changed_edges
 
     def copy(self):
@@ -150,7 +148,6 @@ class Graph(object):
         plt.show()
 
     def draw_edges(self, edges):
-        # print edges
         nx.draw_networkx_edges(nxg, pos, edges, edge_color='r')
         reduced_labels = {(u,v): edge_labels[(u,v)] for u,v,_ in edges}
         nx.draw_networkx_edge_labels(nxg, pos, edge_labels=reduced_labels, font_color='r')
