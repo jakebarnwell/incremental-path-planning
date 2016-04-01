@@ -130,7 +130,7 @@ class World: #todo add __str__/__repr__
                     #  the robot doesn't know that.
         return True
 
-    def draw(self, ground_truth=False, at_time=None):
+    def draw(self, ground_truth=False, at_time=None, animating = False):
         """
         Draws the current grid representation of this World. This drawing includes
         information about obstacles, start/goal nodes, and the robot's current
@@ -153,7 +153,7 @@ class World: #todo add __str__/__repr__
         path_travelled = self._path_travelled[0:time+1]
         robot_position = self._path_travelled[time]
 
-        axes = grid.draw()
+        axes = grid.draw(animating = animating)
         grid.draw_cell_circle(axes, robot_position, color=COLOR["robot"])
         grid.draw_path(axes, future_path, color=COLOR["path-future"], linewidth=2, linestyle="dashed")
         grid.draw_path(axes, path_travelled, color=COLOR["path-travelled"], linewidth=3)
@@ -169,11 +169,12 @@ class World: #todo add __str__/__repr__
     #     return axes
 
     def draw_all_path(self, time_step = 1):
-        for time_index in range(0,self.time):
-            temp = self.draw(at_time=time_index)
-            display.display(temp.get_figure())
-            display.clear_output(wait=True)
-            time_library.sleep(time_step)
+	plt.rcParams["figure.figsize"]=(200,200)
+	for time_index in range(0,self.time+1):
+		temp =	self.draw(at_time=time_index,animating=True)
+		display.display(temp.get_figure())
+		display.clear_output(wait=True)
+    		time_library.sleep(time_step)
 
     @property
     def robot_position(self):
