@@ -3,7 +3,6 @@ from grid import *
 TOLERANCE = 0.01
 
 class World: #todo add __str__/__repr__
-#todo add is_at_goal flag
 #todo assumptions: world can change, but give up if currently can't reach goal
 #obstacles may appear/disappear/move, but they will never crush the robot
     """
@@ -22,6 +21,8 @@ class World: #todo add __str__/__repr__
     """
     def __init__(self, init_grid_ground_truth, robot_start_position, vision_radius=1.5):
         # The radius the robot can "see" for its belief state
+        #   1   = see neighboring cells on 4-connected grid
+        #   1.5 = see neighboring cells on 8-connected grid
         self._VISION_RADIUS = vision_radius
 
         # The current time step, robot's position, and path travelled so far
@@ -31,6 +32,10 @@ class World: #todo add __str__/__repr__
 
         # Stores what the world really looks like currently
         self._grid_ground_truth = init_grid_ground_truth
+        self._goal_location = init_grid_ground_truth.get_goal()
+
+        # Boolean flag for whether the robot is at the goal
+        self._is_robot_at_goal = (self._robot_position == self._goal_location)
 
         # Stores what the robot "sees" or "believes" to be the world currently
         self._grid_belief_state = init_grid_ground_truth.clone_template()
@@ -73,6 +78,7 @@ class World: #todo add __str__/__repr__
         # Store new robot position. Must happen before _update_belief_state
         #  is called.
         self._robot_position = next_robot_position
+        self._is_robot_at_goal = (self._robot_position == self._goal_location)
 
         # Re-calculate belief state. Must happen after the new _robot_position
         #  is set.
@@ -160,7 +166,7 @@ class World: #todo add __str__/__repr__
 
         return axes
 
-    # @staticmethod
+    # @staticmethod #TODO @jake can we delete this? -jmn
     # def draw_grid(what_grid, robot_position, path_travelled, intended_path):
     #     grid = what_grid
     #     axes = grid.draw()

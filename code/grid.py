@@ -164,6 +164,11 @@ class Grid(object):
     def load_from_dict(self, grid_dict):
         self.grid_array = np.array(grid_dict['grid'])
 
+    def get_goal(self):
+        return self.get_cells_of_type(CELL_GOAL)[0]
+
+    # DRAWING METHODS
+
     def draw(self):
         cols, rows = self.size
         minx, maxx = self.xlimits

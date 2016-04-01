@@ -86,18 +86,6 @@ class Graph(object):
                                            self.get_outgoing_edges(source))))
         return predecessors
 
-#        precessors = []
-#        for source in self._edges:
-#            for edge in self.get_outgoing_edges(source):
-#                if edge.target == node:
-#                    precessors.append(edge) #todo rm
-
-#        return filter(lambda edge: edge.target == node,
-#                      flatten(self._edges.values)) #todo rm
-
-#        return map(lambda edge: edge.source if edge.source != node else edge.target,
-#                   self.get_outgoing_edges(node)) #todo rm
-
     def get_edge(self, source, target):
         """Returns the Edge connecting source to target, or None if no such Edge
         exists.  Assumes that at most one such edge exists."""

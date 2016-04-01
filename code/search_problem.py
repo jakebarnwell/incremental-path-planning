@@ -24,6 +24,9 @@ class IncrementalSearchProblem(object):
     def update_world(self, intended_path):
         return self._world.update_world(intended_path)
 
+    def is_robot_at_goal(self):
+        return self._world._is_robot_at_goal
+
     @property
     def start_node(self):
         return self._start_node

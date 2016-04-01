@@ -95,4 +95,4 @@ def build_intended_path(next_step, goal, graph, g_values):
 def grid_heuristic(node1, node2):
     """Given two nodes as (x,y) grid-coordinate tuples, computes the heuristic
     value between the nodes."""
-    return max(map(abs, [node1[i]-node2[i] for i in (0,1)])) #todo write more readable code
+    return max(map(abs, [node1[i]-node2[i] for i in (0,1)]))
