@@ -13,10 +13,6 @@ class IncrementalSearchProblem(object):
 
     __str__ = __repr__
 
-#    def __str__(self): #todo rm
-#        repr_world = self._world if len(self._world) == 0 else "{...}"
-#        return "{}(start_node={}, goal_node={}, world={})".format(type(self).__name__, repr(self._start_node), repr(self._goal_node), repr_world)
-
     def get_graph(self):
         return self._world.belief
 

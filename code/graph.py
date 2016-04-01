@@ -29,7 +29,7 @@ class Edge(object):
 class Graph(object):
     def __init__(self, node_label_fn=None):
         self._nodes = set()
-        self._edges = dict() #maps source nodes to sets of edges
+        self._edges = dict() #maps each source node to a set containing its outgoing edges
         self.node_label_fn = node_label_fn if node_label_fn else lambda x: x
         self.node_positions = dict()
 
@@ -75,14 +75,35 @@ class Graph(object):
             raise NodeNotInGraph(node)
         return self._edges.get(node, set())
 
-    def get_neighbors(self, node): #todo probably inefficient #todo this is undirected
-        return map(lambda edge: edge.source if edge.source != node else edge.target,
-                   self.get_outgoing_edges(node))
+    def get_successors(self, node):
+        return map(lambda edge: edge.target, self.get_outgoing_edges(node))
+
+    def get_predecessors(self, node):
+        predecessors = []
+        for source in self._edges:
+            predecessors.extend(map(lambda edge: edge.source,
+                                    filter(lambda edge: edge.target==node,
+                                           self.get_outgoing_edges(source))))
+        return predecessors
+
+#        precessors = []
+#        for source in self._edges:
+#            for edge in self.get_outgoing_edges(source):
+#                if edge.target == node:
+#                    precessors.append(edge) #todo rm
+
+#        return filter(lambda edge: edge.target == node,
+#                      flatten(self._edges.values)) #todo rm
+
+#        return map(lambda edge: edge.source if edge.source != node else edge.target,
+#                   self.get_outgoing_edges(node)) #todo rm
 
     def get_edge(self, source, target):
+        """Returns the Edge connecting source to target, or None if no such Edge
+        exists.  Assumes that at most one such edge exists."""
         matching_edges = filter(lambda edge: edge.target == target,
                                 self.get_outgoing_edges(source))
-        return matching_edges[0] if matching_edges else None #todo this assumes only one edge from node1 to node2 exists
+        return matching_edges[0] if matching_edges else None
 
     def get_edge_weight(self, source, target):
         edge = self.get_edge(source, target)
