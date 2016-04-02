@@ -1,4 +1,5 @@
 from queue import PriorityQueue
+from utils import get_intended_path
 
 inf = float("inf")
 
@@ -13,10 +14,7 @@ queue: a PriorityQueue using calc_key as its priority function
 graph: the Graph representing the robot's initial map of the world. You'll want
     to update this variable whenever the world changes.
 
-
-
-First, you'll code some helper functions to be used in the D* Lite
-algorithm.
+First, you'll code some helper functions to be used in the D* Lite algorithm.
 
 Implement grid_heuristic and calc_key_helper, then run the tests below.
 """
@@ -100,6 +98,28 @@ def compute_shortest_path_helper(g, rhs, start, goal, key_modifier, graph, queue
 """
 Now it's time to implement D* Lite!
 
+As above, you can use the functions calc_key(node) and update_vertex(node), as
+well as compute_shortest_path(), to call your helper functions without needing
+to pass in all the arguments.
+
+As described in the API, the only way to update an IncrementalSearchProblem is
+by calling problem.update_world(intended_path).  However, the standard D* Lite
+algorithm only keeps track of the robot's next step, not its entire planned
+path.  To get the planned path, you can use this helper function:
+
+    get_intended_path(next_step, goal, graph, g)
+
+It takes in a node next_step indicating where the robot will move to next (i.e.
+since the last update), the goal node, the robot's current graph, and the dict
+of g-values.  It uses g-values to reconstruct and return the robot's planned
+path as a list of nodes [next_step, ... , goal], which is exactly the argument
+required by problem.update_world.
+
+In the method dstar_lite, below, we've implemented all the initialization for
+you.  We recommend reading the comments in the INITIALIZE section to understand
+what is going on.  Then, implement the rest of D* Lite, using the provided API
+and following the D* Lite pseudocode.  When you're done, you can test your
+implementation in the test block below.
 """
 
 def dstar_lite(problem):
@@ -112,30 +132,40 @@ def dstar_lite(problem):
     Note: The world is dynamic, so the true positions of obstacles may change as
     the robot moves through the world.  However, if the robot determines at any
     point that there is no finite path to the goal, it should stop searching and
-    return, rather than waiting and hoping that the world will improve.
+    give up, rather than waiting and hoping that the world will improve.
     """
 
-    # Initialize
+    ############################################################################
+    # INITIALIZE
+
+    # Get the start node, goal node, and graph from the IncrementalSearchProblem
     start = problem.start_node
     goal = problem.goal_node
     graph = problem.get_graph()
 
+    # Set g=inf and rhs=inf for all nodes, except the goal node, which has rhs=0
     g = {node:inf for node in graph.get_all_nodes()}
     rhs = {node:inf for node in graph.get_all_nodes()}
     rhs[goal] = 0
+
+    # Set the key modifier k_m to 0
     key_modifier = 0
 
+    # Define shortened helper functions
     def calc_key(node):
         return calc_key_helper(node, g, rhs, start, key_modifier)
+    queue = None # to be reinitialized later
+    def update_vertex(node):
+        update_vertex_helper(node, g, rhs, goal, graph, queue)
+    def compute_shortest_path():
+        compute_shortest_path_helper(g, rhs, start, goal, key_modifier, graph, queue)
 
+    # Initialize the queue using the priority function calc_key
     queue = PriorityQueue(f=lambda node: calc_key(node))
     queue.insert(goal)
 
-    def update_vertex(node):
-        update_vertex_helper(node, g, rhs, goal, graph, queue)
-
-    def compute_shortest_path():
-        compute_shortest_path_helper(g, rhs, start, goal, key_modifier, graph, queue)
+    ############################################################################
+    # YOUR CODE HERE
 
     # Begin algorithm
     last_start = start
@@ -151,7 +181,7 @@ def dstar_lite(problem):
                                             + g[neighbor]))
         old_graph = graph.copy()
         print 'robot moving to:', start
-        intended_path = build_intended_path(start, goal, graph, g)
+        intended_path = get_intended_path(start, goal, graph, g)
         print 'intended path:', intended_path
         graph = problem.update_world(intended_path)
         changed_edges = old_graph.get_changed_edges(graph)
@@ -169,11 +199,5 @@ def dstar_lite(problem):
     print 'robot at:', start
     return problem #contains path traversed, intended future path, and other info
 
-def build_intended_path(next_step, goal, graph, g_values):
-    """Uses g-values to reconstruct future planned path given intended next
-    step.  Returns a path as a list [next_step, ... , goal]"""
-    path = [next_step]
-    while path[-1] != goal:
-        path.append(min(graph.get_successors(path[-1]),
-                        key=lambda node: g_values[node]))
-    return path
+# Test dstar_lite
+#test_dstar_lite()
