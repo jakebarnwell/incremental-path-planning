@@ -30,9 +30,31 @@ def calc_key_helper(node, g, rhs, start, key_modifier, heuristic=grid_heuristic)
     min_g_rhs = min([g[node], rhs[node]])
     return (min_g_rhs + heuristic(start, node) + key_modifier, min_g_rhs)
 
+#todo move to tests
+def test_grid_heuristic():
+    print "Testing grid_heuristic..."
+    assert grid_heuristic((1,6), (3,6)) == 2
+    assert grid_heuristic((3,6), (1,6)) == 2
+    assert grid_heuristic((8,4), (8,4)) == 0
+    assert grid_heuristic((2,5), (5,2)) == 3
+    assert grid_heuristic((70,30), (80,60)) == 30
+    assert grid_heuristic((-5,3.2), (2,4.9)) == 7
+    print "grid_heuristic tests passed!"
+
+def test_calc_key_helper():
+    print "Testing calc_key_helper..."
+    assert calc_key_helper((1,1), {(1,1):20}, {(1,1):30}, (0,3), 100) == (122,20)
+    assert calc_key_helper((1,1), {(1,1):30}, {(1,1):20}, (0,3), 100) == (122,20)
+    assert calc_key_helper((0,3), {(0,3):2, (1,0):200, (0,1):1, "garbage":"nonsense"}, {(0,3):99, (600,600):7}, (600,600), 40) == (642,2)
+    zero_heuristic = lambda x,y: 0
+    sum_heuristic = lambda x,y: x+y
+    assert calc_key_helper("nodeA", {"nodeA":21}, {"nodeA":33}, "S", 500, zero_heuristic) == (521,21)
+    assert calc_key_helper(30, {30:900}, {30:800}, 4, 6000, sum_heuristic) == (6834,800)
+    print "calc_key_helper tests passed!"
+
 # Test grid_heuristic and calc_key_helper:
-#test_grid_heuristic()
-#test_calc_key_helper()
+test_grid_heuristic()
+test_calc_key_helper()
 
 
 """Next, implement update_vertex_helper, following the pseudocode for D* Lite,
