@@ -2,6 +2,8 @@ from queue import PriorityQueue
 
 inf = float("inf")
 
+#todo note for instructions: world can change, but robot should give up if, at any point, it determines that it can't reach the goal (as opposed to waiting and hoping the world will improve)
+
 def dstar_lite(problem):
 
     # Initialize

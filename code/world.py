@@ -3,8 +3,6 @@ from grid import *
 TOLERANCE = 0.01
 
 class World: #todo add __str__/__repr__
-#todo assumptions: world can change, but give up if currently can't reach goal
-#obstacles may appear/disappear/move, but they will never crush the robot
     """
     A World object represents the belief-state of a robot. In
     particular, a World object stores what the world (as a grid)
@@ -166,7 +164,7 @@ class World: #todo add __str__/__repr__
 
         return axes
 
-    # @staticmethod #TODO @jake can we delete this? -jmn
+    # @staticmethod #TODO fix implementation or delete commented code
     # def draw_grid(what_grid, robot_position, path_travelled, intended_path):
     #     grid = what_grid
     #     axes = grid.draw()
