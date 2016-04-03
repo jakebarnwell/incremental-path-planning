@@ -1,4 +1,5 @@
 from grid import *
+from copy import deepcopy
 
 class IncrementalSearchProblem(object):
     # For now we have a dict mapping robot (x,y) --> Graph, i.e. its understanding
@@ -12,6 +13,9 @@ class IncrementalSearchProblem(object):
         return "{}(start_node={}, goal_node={}, world={})".format(type(self).__name__, repr(self._start_node), repr(self._goal_node), repr(self._world))
 
     __str__ = __repr__
+
+    def copy(self):
+        return deepcopy(self)
 
     def get_graph(self):
         return self._world.belief

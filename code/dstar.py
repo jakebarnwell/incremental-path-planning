@@ -92,6 +92,9 @@ problem_simple = IncrementalSearchProblem(world_simple, robot_start_simple,
                                           goal_simple)
 graph_simple = problem_simple.get_graph()
 
+problem_simple_step2 = problem_simple.copy()
+graph_simple_step2 = problem_simple_step2.update_world([(0,2), (1,1), (2,0)])
+
 graph_triangle = Graph()
 graph_triangle._nodes = set("ABC")
 graph_triangle.add_edge("A", "B", 2, bidirectional=False)
@@ -182,7 +185,7 @@ def test_update_vertex_helper():
     g = {(1, 2): inf, (0, 1): inf, (3, 2): inf, (0, 0): inf, (3, 0): inf, (3, 1): inf, (2, 4): inf, (1, 4): inf, (0, 2): 2.0, (2, 0): 0, (1, 3): 5, (2, 3): inf, (2, 1): 1.0, (2, 2): inf, (1, 0): inf, (4, 2): inf, (0, 3): inf, (0, 4): inf, (4, 1): inf, (1, 1): 1.0, (4, 0): inf}
     rhs = {(1, 2): inf, (0, 1): 2.0, (3, 2): inf, (0, 0): 2.0, (3, 0): inf, (3, 1): inf, (2, 4): inf, (1, 4): inf, (0, 2): 2.0, (2, 0): 0, (1, 3): 9, (2, 3): inf, (2, 1): 1.0, (2, 2): 2.0, (1, 0): 1.0, (4, 2): inf, (0, 3): inf, (0, 4): inf, (4, 1): inf, (1, 1): 1.0, (4, 0): inf}
     queue = PriorityQueue()
-    queue.extend([(4.0, 1.0), (4.0, 2.0), (4.0, 2.0), (5.0, 2.0)])
+    queue.extend([(1, 0), (0, 1), (2, 2), (0, 0)])
     expected_rhs = {(1, 2): inf, (0, 1): 2.0, (3, 2): inf, (0, 0): 2.0, (3, 0): inf, (3, 1): inf, (2, 4): inf, (1, 4): inf, (0, 2): 2.0, (2, 0): 0, (1, 3): inf, (2, 3): inf, (2, 1): 1.0, (2, 2): 2.0, (1, 0): 1.0, (4, 2): inf, (0, 3): inf, (0, 4): inf, (4, 1): inf, (1, 1): 1.0, (4, 0): inf}
     expected_queue = queue.copy()
     expected_queue.insert((1,3))
@@ -208,22 +211,28 @@ def compute_shortest_path_helper(g, rhs, start, goal, key_modifier, graph, queue
     """As in the D* Lite pseudocode, this method computes (or recomputes) the
     shortest path by popping nodes off the queue, updating their g and rhs
     values, and calling update_vertex on their neighbors.  Returns nothing."""
+#    print '\ninput'
+#    print 'g =', g
+#    print 'rhs =', rhs
+#    print 'start =', start, 'key_modifier =', key_modifier
+#    print 'queue =', queue
 
     # Helper functions that take in only one argument, node:
     def calc_key(node):
         return calc_key_helper(node, g, rhs, start, key_modifier)
     def update_vertex(node):
-        update_vertex_helper(node, g, rhs, goal, graph, queue)
+        return update_vertex_helper(node, g, rhs, goal, graph, queue)
 
     # Your code here
     print '> COMPUTE SHORTEST PATH'
     while True:
         smallest_key = queue.top_key()
         if smallest_key >= calc_key(start) and rhs[start] == g[start]:
-            return
+            break
         node = queue.pop()
         print '> dequeue node', node, 'with h =', grid_heuristic(node, start)
         if smallest_key < calc_key(node):
+            print smallest_key, calc_key(node), node
             queue.insert(node)
         elif g[node] > rhs[node]:
             g[node] = rhs[node]
@@ -234,8 +243,55 @@ def compute_shortest_path_helper(g, rhs, start, goal, key_modifier, graph, queue
             for next_node in graph.get_predecessors(node) + [node]:
                 update_vertex(next_node)
 
+#    print '\noutput'
+#    print 'g =', g
+#    print 'rhs =', rhs
+#    print 'start =', start, 'key_modifier =', key_modifier
+#    print 'queue =', queue
+
+
+#todo move to tests
+def test_compute_shortest_path_helper():
+    print "Testing compute_shortest_path_helper..."
+
+    # problem_simple, first step
+    g = {(1, 2): inf, (0, 1): inf, (3, 2): inf, (0, 0): inf, (3, 0): inf, (3, 1): inf, (2, 4): inf, (1, 4): inf, (0, 2): inf, (2, 0): inf, (1, 3): inf, (2, 3): inf, (2, 1): inf, (2, 2): inf, (1, 0): inf, (4, 2): inf, (0, 3): inf, (0, 4): inf, (4, 1): inf, (1, 1): inf, (4, 0): inf}
+    rhs = {(1, 2): inf, (0, 1): inf, (3, 2): inf, (0, 0): inf, (3, 0): inf, (3, 1): inf, (2, 4): inf, (1, 4): inf, (0, 2): inf, (2, 0): 0, (1, 3): inf, (2, 3): inf, (2, 1): inf, (2, 2): inf, (1, 0): inf, (4, 2): inf, (0, 3): inf, (0, 4): inf, (4, 1): inf, (1, 1): inf, (4, 0): inf}
+    graph = graph_simple.copy()
+    calc_key = lambda node: calc_key_helper(node, g, rhs, (0, 3), 0)
+    queue = PriorityQueue(f=lambda node: calc_key(node))
+    queue.insert(goal_simple)
+    g_expected = {(1, 2): inf, (0, 1): inf, (3, 2): inf, (0, 0): inf, (3, 0): inf, (3, 1): inf, (2, 4): inf, (1, 4): inf, (0, 2): 2.0, (2, 0): 0, (1, 3): inf, (2, 3): inf, (2, 1): 1.0, (2, 2): inf, (1, 0): inf, (4, 2): inf, (0, 3): 3.0, (0, 4): inf, (4, 1): inf, (1, 1): 1.0, (4, 0): inf}
+    rhs_expected = {(1, 2): inf, (0, 1): 2.0, (3, 2): inf, (0, 0): 2.0, (3, 0): inf, (3, 1): inf, (2, 4): inf, (1, 4): 4.0, (0, 2): 2.0, (2, 0): 0, (1, 3): inf, (2, 3): inf, (2, 1): 1.0, (2, 2): 2.0, (1, 0): 1.0, (4, 2): inf, (0, 3): 3.0, (0, 4): 4.0, (4, 1): inf, (1, 1): 1.0, (4, 0): inf}
+    compute_shortest_path_helper(g, rhs, (0, 3), goal_simple, 0, graph, queue)
+    assert graph == graph_simple #not modified
+    assert g == g_expected
+    assert rhs == rhs_expected
+    queue_expected = PriorityQueue(f=lambda node: calc_key(node))
+    queue_expected.extend([(1, 0), (0, 1), (2, 2), (0, 0), (0, 4), (1, 4)])
+    assert queue == queue_expected
+
+    # problem_simple, second step
+    g = {(1, 2): inf, (0, 1): inf, (3, 2): inf, (0, 0): inf, (3, 0): inf, (3, 1): inf, (2, 4): inf, (1, 4): inf, (0, 2): 2.0, (2, 0): 0, (1, 3): inf, (2, 3): inf, (2, 1): 1.0, (2, 2): inf, (1, 0): inf, (4, 2): inf, (0, 3): 3.0, (0, 4): inf, (4, 1): inf, (1, 1): 1.0, (4, 0): inf}
+    rhs = {(1, 2): inf, (0, 1): 3.0, (3, 2): inf, (0, 0): inf, (3, 0): inf, (3, 1): inf, (2, 4): inf, (1, 4): 4.0, (0, 2): 4.0, (2, 0): 0, (1, 3): inf, (2, 3): inf, (2, 1): 1.0, (2, 2): 2.0, (1, 0): 1.0, (4, 2): inf, (0, 3): 3.0, (0, 4): 4.0, (4, 1): inf, (1, 1): inf, (4, 0): inf}
+    graph = graph_simple_step2.copy()
+    calc_key = lambda node: calc_key_helper(node, g, rhs, (0, 2), 1)
+    queue = PriorityQueue(f=lambda node: calc_key(node))
+    queue.extend([(1, 1), (0, 2), (1, 0), (2, 2), (0, 1), (0, 4), (1, 4)])
+    g_expected = {(1, 2): inf, (0, 1): 2.0, (3, 2): inf, (0, 0): inf, (3, 0): inf, (3, 1): inf, (2, 4): inf, (1, 4): inf, (0, 2): 3.0, (2, 0): 0, (1, 3): inf, (2, 3): inf, (2, 1): 1.0, (2, 2): inf, (1, 0): 1.0, (4, 2): inf, (0, 3): 3.0, (0, 4): inf, (4, 1): inf, (1, 1): inf, (4, 0): inf}
+    rhs_expected = {(1, 2): inf, (0, 1): 2.0, (3, 2): inf, (0, 0): 2.0, (3, 0): inf, (3, 1): inf, (2, 4): inf, (1, 4): 4.0, (0, 2): 3.0, (2, 0): 0, (1, 3): inf, (2, 3): inf, (2, 1): 1.0, (2, 2): 2.0, (1, 0): 1.0, (4, 2): inf, (0, 3): 4.0, (0, 4): 4.0, (4, 1): inf, (1, 1): inf, (4, 0): inf}
+    compute_shortest_path_helper(g, rhs, (0, 2), goal_simple, 1, graph, queue)
+    assert graph == graph_simple_step2 #not modified
+    assert g == g_expected
+    assert rhs == rhs_expected
+    queue_expected = PriorityQueue(f=lambda node: calc_key(node))
+    queue_expected.extend([(0, 0), (2, 2), (0, 3), (0, 4), (1, 4)])
+    assert queue == queue_expected
+
+    print "compute_shortest_path_helper tests passed!"
+
 # Test compute_shortest_path_helper:
-#test_compute_shortest_path_helper()
+test_compute_shortest_path_helper()
 
 
 """
@@ -299,9 +355,9 @@ def dstar_lite(problem):
         return calc_key_helper(node, g, rhs, start, key_modifier)
     queue = None # to be reinitialized later
     def update_vertex(node):
-        update_vertex_helper(node, g, rhs, goal, graph, queue)
+        return update_vertex_helper(node, g, rhs, goal, graph, queue)
     def compute_shortest_path():
-        compute_shortest_path_helper(g, rhs, start, goal, key_modifier, graph, queue)
+        return compute_shortest_path_helper(g, rhs, start, goal, key_modifier, graph, queue)
 
     # Initialize the queue using the priority function calc_key
     queue = PriorityQueue(f=lambda node: calc_key(node))

@@ -53,7 +53,7 @@ class PriorityQueue(Queue):
         return self.A == other.A
 
     def __repr__(self):
-        return "PriorityQueue<(item, key): %s>" % str(self.A)
+        return "PriorityQueue<(key, item): %s>" % str(self.A)
     __str__ = __repr__
 
     def copy(self):
