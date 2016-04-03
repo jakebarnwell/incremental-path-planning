@@ -1,4 +1,4 @@
-from grid import *
+import grid as grid_module
 
 TOLERANCE = 0.01
 
@@ -104,13 +104,13 @@ class World: #todo add __str__/__repr__
         as required by D* Lite.
         """
         truth = self._grid_ground_truth
-        start_cells = truth.get_cells_of_type(CELL_START)
-        goal_cells = truth.get_cells_of_type(CELL_GOAL)
+        start_cells = truth.get_cells_of_type(grid_module.CELL_START)
+        goal_cells = truth.get_cells_of_type(grid_module.CELL_GOAL)
 
         for start in start_cells:
-            self._grid_belief_state.set_cell(start[0], start[1], CELL_START)
+            self._grid_belief_state.set_cell(start[0], start[1], grid_module.CELL_START)
         for goal in goal_cells:
-            self._grid_belief_state.set_cell(goal[0], goal[1], CELL_GOAL)
+            self._grid_belief_state.set_cell(goal[0], goal[1], grid_module.CELL_GOAL)
 
     def _update_belief_state(self):
         """
@@ -158,19 +158,11 @@ class World: #todo add __str__/__repr__
         robot_position = self._path_travelled[time]
 
         axes = grid.draw(animating = animating)
-        grid.draw_cell_circle(axes, robot_position, color=COLOR["robot"])
-        grid.draw_path(axes, future_path, color=COLOR["path-future"], linewidth=2, linestyle="dashed")
-        grid.draw_path(axes, path_travelled, color=COLOR["path-travelled"], linewidth=3)
+        grid.draw_cell_circle(axes, robot_position, color=grid_module.COLOR["robot"])
+        grid.draw_path(axes, future_path, color=grid_module.COLOR["path-future"], linewidth=2, linestyle="dashed")
+        grid.draw_path(axes, path_travelled, color=grid_module.COLOR["path-travelled"], linewidth=3)
 
         return axes
-
-    # @staticmethod #TODO fix implementation or delete commented code
-    # def draw_grid(what_grid, robot_position, path_travelled, intended_path):
-    #     grid = what_grid
-    #     axes = grid.draw()
-    #     grid.draw_cell_circle(axes, robot_position, color=COLOR["robot"])
-    #
-    #     return axes
 
     def draw_all_path(self, time_step = 1):
 	plt.rcParams["figure.figsize"]=(200,200)
