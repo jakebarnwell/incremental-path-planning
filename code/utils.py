@@ -1,7 +1,20 @@
 # -*- coding: utf-8 -*-
 
+def get_intended_path(next_step, goal, graph, g):
+    """Uses g-values to reconstruct future planned path given intended next
+    step.  Returns a path as a list [next_step, ... , goal]"""
+    path = [next_step]
+    while path[-1] != goal:
+        path.append(min(graph.get_successors(path[-1]),
+                        key=lambda node: g[node]))
+    return path
+
+
+
+
+
 """
-Parts of the code in this file may be modified and/or original code by Peter Norvig.
+Parts of the code below may be modified and/or original code by Peter Norvig.
 
 Original Software License Agreement
 
