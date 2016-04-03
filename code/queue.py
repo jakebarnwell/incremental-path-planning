@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Parts of the code in this file may be modified and/or original code by Peter Norvig.
 
@@ -20,18 +19,8 @@ http://www.norvig.com/license.html
 import bisect
 from copy import deepcopy
 
-class Queue: #todo clean up docstring
-    """Queue is an abstract class/interface.
-    Note that isinstance(Stack(), Queue) is false, because we implement stacks
-    as lists.  If Python ever gets interfaces, Queue will be an interface."""
 
-    def __init__(self):
-        abstract
-
-    def extend(self, items):
-        for item in items: self.insert(item)
-
-class PriorityQueue(Queue):
+class PriorityQueue():
     """A queue in which the minimum (or maximum) element (as determined by f and
     order) is returned first. If order is min, the item with minimum f(x) is
     returned first; if order is max, then it is the item with maximum f(x).
@@ -55,6 +44,10 @@ class PriorityQueue(Queue):
     def __repr__(self):
         return "PriorityQueue<(key, item): %s>" % str(self.A)
     __str__ = __repr__
+
+    def extend(self, items):
+        for item in items:
+            self.insert(item)
 
     def copy(self):
         return deepcopy(self)

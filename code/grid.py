@@ -173,7 +173,7 @@ class Grid(object):
 
     # DRAWING METHODS
 
-    def draw(self):
+    def draw(self, animating=False):
         cols, rows = self.size
         minx, maxx = self.xlimits
         miny, maxy = self.ylimits

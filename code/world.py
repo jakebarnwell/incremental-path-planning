@@ -170,7 +170,7 @@ class World: #todo add __str__/__repr__
 		temp =	self.draw(at_time=time_index,animating=True)
 		display.display(temp.get_figure())
 		display.clear_output(wait=True)
-    		time_library.sleep(time_step)
+		time_library.sleep(time_step)
 
     @property
     def robot_position(self):
