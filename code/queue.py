@@ -18,6 +18,7 @@ http://www.norvig.com/license.html
 """
 
 import bisect
+from copy import deepcopy
 
 class Queue: #todo clean up docstring
     """Queue is an abstract class/interface.
@@ -47,6 +48,16 @@ class PriorityQueue(Queue):
     """ #todo clean up docstring
     def __init__(self, order=min, f=lambda x: x):
         update(self, A=[], order=order, f=f)
+
+    def __eq__(self, other):
+        return self.A == other.A
+
+    def __repr__(self):
+        return "PriorityQueue<(item, key): %s>" % str(self.A)
+    __str__ = __repr__
+
+    def copy(self):
+        return deepcopy(self)
 
     def insert(self, item):
         bisect.insort(self.A, (self.f(item), item))

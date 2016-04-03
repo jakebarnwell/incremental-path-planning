@@ -63,6 +63,7 @@ then run the tests below."""
 def update_vertex_helper(node, g, rhs, goal, graph, queue):
     """As in the D* Lite pseudocode, this method updates node's rhs value and
     queue status. Returns nothing."""
+#    print 'input\n', ", ".join(map(str,[node, g, rhs, goal, graph, queue]))
     if node != goal:
         rhs[node] = min([graph.get_edge_weight(node, neighbor) + g[neighbor]
                          for neighbor in graph.get_successors(node)])
@@ -70,9 +71,129 @@ def update_vertex_helper(node, g, rhs, goal, graph, queue):
         queue.remove(node)
     if g[node] != rhs[node]:
         queue.insert(node)
+#    print 'output\n', ", ".join(map(str,[rhs, queue]))
+
+#todo move to tests
+#simple problem (from 10-page D* Lite paper, IEEE 2002, page 6)
+from grid import Grid
+from graph import Graph
+from search_problem import IncrementalSearchProblem
+from world import World
+grid_str_simple = """0 0 0
+                     S 1 0
+                     0 1 0
+                     0 1 0
+                     0 0 G"""
+grid_simple = Grid.create_from_str(grid_str_simple)
+robot_start_simple = (0,3)
+world_simple = World(grid_simple, robot_start_simple, vision_radius=1.5)
+goal_simple = (2,0)
+problem_simple = IncrementalSearchProblem(world_simple, robot_start_simple,
+                                          goal_simple)
+graph_simple = problem_simple.get_graph()
+
+graph_triangle = Graph()
+graph_triangle._nodes = set("ABC")
+graph_triangle.add_edge("A", "B", 2, bidirectional=False)
+graph_triangle.add_edge("B", "C", 3, bidirectional=False)
+graph_triangle.add_edge("A", "C", 7, bidirectional=False)
+
+def test_update_vertex_helper():
+    print "Testing update_vertex_helper..."
+
+    # Test 1: triangle problem; A not in queue, don't insert
+    g = dict(A=9, B=10, C=2)
+    g_original = g.copy()
+    rhs = dict(A="value_to_be_overwritten")
+    graph = graph_triangle.copy()
+    queue = PriorityQueue() #empty
+    update_vertex_helper("A", g, rhs, "non-existent_goal_node", graph, queue)
+    assert g == g_original #not modified
+    assert rhs == dict(A=9)
+    assert graph == graph_triangle #not modified
+    assert queue == PriorityQueue()
+
+    # Test 2: triangle problem; remove A from queue and don't re-insert
+    g = dict(A=9, B=10, C=2)
+    g_original = g.copy()
+    rhs = dict(A="value_to_be_overwritten")
+    graph = graph_triangle.copy()
+    queue = PriorityQueue() #empty
+    queue.extend(list("XYAZ"))
+    expected_queue = queue.copy()
+    expected_queue.remove("A")
+    update_vertex_helper("A", g, rhs, "non-existent_goal_node", graph, queue)
+    assert g == g_original #not modified
+    assert rhs == dict(A=9)
+    assert graph == graph_triangle #not modified
+    assert queue == expected_queue
+
+    # Test 3: triangle problem; A not in queue, do insert
+    g = dict(A=8, B=10, C=2)
+    g_original = g.copy()
+    rhs = dict(A=0)
+    graph = graph_triangle.copy()
+    queue = PriorityQueue() #empty
+    queue.extend(list("XYZ"))
+    expected_queue = queue.copy()
+    expected_queue.insert("A")
+    update_vertex_helper("A", g, rhs, "non-existent_goal_node", graph, queue)
+    assert g == g_original #not modified
+    assert rhs == dict(A=9)
+    assert graph == graph_triangle #not modified
+    assert queue == expected_queue
+
+    # Test 4: triangle problem; A in queue, remove and re-insert
+    g = dict(A=20, B=10, C=2)
+    g_original = g.copy()
+    rhs = dict(B="other_stuff")
+    graph = graph_triangle.copy()
+    queue = PriorityQueue() #empty
+    queue.extend(list("XYAZ"))
+    expected_queue = queue.copy()
+    update_vertex_helper("A", g, rhs, "non-existent_goal_node", graph, queue)
+    assert g == g_original #not modified
+    assert rhs == dict(A=9, B="other_stuff")
+    assert graph == graph_triangle #not modified
+    assert queue == expected_queue
+
+    # Test 5: triangle problem; B has only one successor
+    g = dict(A=1, B=100, C=10)
+    g_original = g.copy()
+    rhs = dict()
+    queue = PriorityQueue() #empty
+    expected_queue = queue.copy()
+    expected_queue.insert("B")
+    update_vertex_helper("B", g, rhs, "non-existent_goal_node",
+                         graph_triangle.copy(), queue)
+    assert rhs == dict(B=13)
+    assert queue == expected_queue
+
+    # Test 6: triangle problem; B is goal
+    g = dict(A=1, B=0, C=10)
+    g_original = g.copy()
+    rhs = dict(B=0)
+    queue = PriorityQueue() #empty
+    update_vertex_helper("B", g, rhs, "B", graph_triangle.copy(), queue)
+    assert rhs == dict(B=0)
+    assert queue == PriorityQueue()
+
+    # Test 7: bidirectional graph from problem_simple
+    g = {(1, 2): inf, (0, 1): inf, (3, 2): inf, (0, 0): inf, (3, 0): inf, (3, 1): inf, (2, 4): inf, (1, 4): inf, (0, 2): 2.0, (2, 0): 0, (1, 3): 5, (2, 3): inf, (2, 1): 1.0, (2, 2): inf, (1, 0): inf, (4, 2): inf, (0, 3): inf, (0, 4): inf, (4, 1): inf, (1, 1): 1.0, (4, 0): inf}
+    rhs = {(1, 2): inf, (0, 1): 2.0, (3, 2): inf, (0, 0): 2.0, (3, 0): inf, (3, 1): inf, (2, 4): inf, (1, 4): inf, (0, 2): 2.0, (2, 0): 0, (1, 3): 9, (2, 3): inf, (2, 1): 1.0, (2, 2): 2.0, (1, 0): 1.0, (4, 2): inf, (0, 3): inf, (0, 4): inf, (4, 1): inf, (1, 1): 1.0, (4, 0): inf}
+    queue = PriorityQueue()
+    queue.extend([(4.0, 1.0), (4.0, 2.0), (4.0, 2.0), (5.0, 2.0)])
+    expected_rhs = {(1, 2): inf, (0, 1): 2.0, (3, 2): inf, (0, 0): 2.0, (3, 0): inf, (3, 1): inf, (2, 4): inf, (1, 4): inf, (0, 2): 2.0, (2, 0): 0, (1, 3): inf, (2, 3): inf, (2, 1): 1.0, (2, 2): 2.0, (1, 0): 1.0, (4, 2): inf, (0, 3): inf, (0, 4): inf, (4, 1): inf, (1, 1): 1.0, (4, 0): inf}
+    expected_queue = queue.copy()
+    expected_queue.insert((1,3))
+    update_vertex_helper((1,3), g, rhs, goal_simple, graph_simple, queue)
+    assert rhs == expected_rhs
+    assert queue == expected_queue
+
+    print "update_vertex_helper tests passed!"
 
 # Test update_vertex_helper:
-#test_update_vertex_helper()
+test_update_vertex_helper()
 
 """
 Just one more helper function before we get to the main function!

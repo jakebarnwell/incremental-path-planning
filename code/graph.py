@@ -24,6 +24,7 @@ class Edge(object):
             and self.weight == other.weight
     def __repr__(self):
         return "Edge(%r,%r,%r)" % (self.source, self.target, self.weight)
+    __str__ = __repr__
 
 
 class Graph(object):
@@ -32,6 +33,13 @@ class Graph(object):
         self._edges = dict() #maps each source node to a set containing its outgoing edges
         self.node_label_fn = node_label_fn if node_label_fn else lambda x: x
         self.node_positions = dict()
+
+    def __eq__(self, other):
+        return self._nodes == other._nodes and self._edges == other._edges
+
+    def __repr__(self):
+        return "Graph<nodes: %s, edges: %s>" % (str(self._nodes), str(self._edges))
+    __str__ = __repr__
 
     def __contains__(self, node):
         return node in self._nodes
