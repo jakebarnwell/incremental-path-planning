@@ -1,4 +1,5 @@
 import grid as grid_module
+import matplotlib.pyplot as plt
 
 TOLERANCE = 0.01
 
