@@ -21,11 +21,12 @@ def grid_heuristic(node1, node2):
     """Given two nodes as (x,y) grid-coordinate tuples, computes the heuristic
     value between the nodes.  (Hint: The heuristic value is just the maximum of
     the difference in x or y.)"""
-    raise NotImplementedError
+    return max(map(abs, [node1[i]-node2[i] for i in (0,1)]))
 
 def calc_key_helper(node, g, rhs, start, key_modifier, heuristic=grid_heuristic):
     "Computes the node's current key and returns it as a tuple of two numbers."
-    raise NotImplementedError
+    min_g_rhs = min([g[node], rhs[node]])
+    return (min_g_rhs + heuristic(start, node) + key_modifier, min_g_rhs)
 
 
 "Test grid_heuristic and calc_key_helper:"
@@ -39,7 +40,13 @@ then run the tests below."""
 def update_vertex_helper(node, g, rhs, goal, graph, queue):
     """As in the D* Lite pseudocode, this method updates node's rhs value and
     queue status. Returns nothing."""
-    raise NotImplementedError
+    if node != goal:
+        rhs[node] = min([graph.get_edge_weight(node, neighbor) + g[neighbor]
+                         for neighbor in graph.get_successors(node)])
+    if node in queue:
+        queue.remove(node)
+    if g[node] != rhs[node]:
+        queue.insert(node)
 
 
 "Test update_vertex_helper:"
@@ -66,7 +73,24 @@ def compute_shortest_path_helper(g, rhs, start, goal, key_modifier, graph, queue
         return update_vertex_helper(node, g, rhs, goal, graph, queue)
 
     # YOUR CODE HERE
-    raise NotImplementedError
+    print '> COMPUTE SHORTEST PATH'
+    while True:
+        smallest_key = queue.top_key()
+        if smallest_key >= calc_key(start) and rhs[start] == g[start]:
+            break
+        node = queue.pop()
+        print '> dequeue node', node, 'with h =', grid_heuristic(node, start)
+        if smallest_key < calc_key(node):
+            print smallest_key, calc_key(node), node
+            queue.insert(node)
+        elif g[node] > rhs[node]:
+            g[node] = rhs[node]
+            for next_node in graph.get_predecessors(node):
+                update_vertex(next_node)
+        else:
+            g[node] = inf
+            for next_node in graph.get_predecessors(node) + [node]:
+                update_vertex(next_node)
 
 
 "Test compute_shortest_path_helper:"
@@ -144,9 +168,38 @@ def dstar_lite(problem):
 
     ############################################################################
     # YOUR CODE HERE
-    raise NotImplementedError
 
-    return problem
+    # Begin algorithm
+    last_start = start
+    compute_shortest_path()
+    print 'robot starting at:', start
+
+    while start != goal:
+        if g[start] == inf:
+            print "no path found"
+            return problem
+        start = min(graph.get_successors(start),
+                    key = lambda neighbor: (graph.get_edge_weight(start, neighbor)
+                                            + g[neighbor]))
+        old_graph = graph.copy()
+        print 'robot moving to:', start
+        intended_path = get_intended_path(start, goal, graph, g)
+        print 'intended path:', intended_path
+        graph = problem.update_world(intended_path)
+        changed_edges = old_graph.get_changed_edges(graph)
+        if changed_edges:
+            key_modifier = key_modifier + grid_heuristic(last_start, start)
+            last_start = start
+            for (old_edge, new_edge) in changed_edges:
+                if old_edge and new_edge: #edge simply changed weight
+                    update_vertex(old_edge.source)
+                elif not old_edge: #new edge was added
+                    raise NotImplementedError("Edge addition not yet supported")
+                else: #old edge was deleted
+                    raise NotImplementedError("Edge deletion not yet supported")
+            compute_shortest_path()
+    print 'robot at:', start
+    return problem #contains path traversed, intended future path, and other info
 
 
 "Test dstar_lite:"

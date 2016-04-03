@@ -9,4 +9,4 @@ test_compute_shortest_path_helper()
 
 test_dstar_lite()
 
-print '\nALL TESTS PASS!\n'
+print 'ALL TESTS PASSED!\n'

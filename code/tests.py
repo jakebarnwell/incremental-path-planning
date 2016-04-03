@@ -46,7 +46,7 @@ def test_grid_heuristic():
     assert grid_heuristic((2,5), (5,2)) == 3
     assert grid_heuristic((70,30), (80,60)) == 30
     assert grid_heuristic((-5,3.2), (2,4.9)) == 7
-    print "grid_heuristic tests passed!"
+    print "grid_heuristic tests passed!\n"
 
 def test_calc_key_helper():
     print "Testing calc_key_helper..."
@@ -57,7 +57,7 @@ def test_calc_key_helper():
     sum_heuristic = lambda x,y: x+y
     assert calc_key_helper("nodeA", {"nodeA":21}, {"nodeA":33}, "S", 500, zero_heuristic) == (521,21)
     assert calc_key_helper(30, {30:900}, {30:800}, 4, 6000, sum_heuristic) == (6834,800)
-    print "calc_key_helper tests passed!"
+    print "calc_key_helper tests passed!\n"
 
 
 def test_update_vertex_helper():
@@ -152,7 +152,7 @@ def test_update_vertex_helper():
     assert rhs == expected_rhs
     assert queue == expected_queue
 
-    print "update_vertex_helper tests passed!"
+    print "update_vertex_helper tests passed!\n"
 
 #todo move to tests
 def test_compute_shortest_path_helper():
@@ -192,7 +192,7 @@ def test_compute_shortest_path_helper():
     queue_expected.extend([(0, 0), (2, 2), (0, 3), (0, 4), (1, 4)])
     assert queue == queue_expected
 
-    print "compute_shortest_path_helper tests passed!"
+    print "compute_shortest_path_helper tests passed!\n"
 
 #todo move to tests
 def test_dstar_lite():
@@ -201,4 +201,4 @@ def test_dstar_lite():
     result = dstar_lite(problem)
     assert result == problem_simple_complete
     assert problem == problem_simple_complete #check that problem was modified
-    print "dstar_lite tests passed!"
+    print "dstar_lite tests passed!\n"
