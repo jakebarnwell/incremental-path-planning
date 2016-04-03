@@ -49,7 +49,7 @@ class World: #todo add __str__/__repr__
         # Stores history of "future paths" for the robot. These future paths
         #  are ones supplied in each update_world call, e.g. from the D* Lite
         #  algorithm execution.
-        self._history_intended_path = [[]]
+        self._history_intended_path = [[robot_start_position]]
 
     def update_world(self, intended_path):
         """
