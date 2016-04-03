@@ -59,6 +59,10 @@ class Grid(object):
             else:
                 self.figsize = (width * PREFERRED_MAX_FIG_HEIGHT / height, PREFERRED_MAX_FIG_HEIGHT)
 
+    def __eq__(self, other):
+        return self.xlimits == other.xlimits and self.ylimits == other.ylimits \
+            and self.grid_array == other.grid_array
+
     @classmethod
     def create_from_file(grid_class, grid_file, figsize=None):
         gfile = open(grid_file)

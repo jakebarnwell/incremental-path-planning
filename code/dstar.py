@@ -95,6 +95,11 @@ graph_simple = problem_simple.get_graph()
 problem_simple_step2 = problem_simple.copy()
 graph_simple_step2 = problem_simple_step2.update_world([(0,2), (1,1), (2,0)])
 
+problem_simple_complete = problem_simple_step2.copy()
+problem_simple_complete.update_world([(0,1), (1,0), (2,0)])
+problem_simple_complete.update_world([(1,0), (2,0)])
+problem_simple_complete.update_world([(2,0)])
+
 graph_triangle = Graph()
 graph_triangle._nodes = set("ABC")
 graph_triangle.add_edge("A", "B", 2, bidirectional=False)
@@ -398,5 +403,14 @@ def dstar_lite(problem):
     print 'robot at:', start
     return problem #contains path traversed, intended future path, and other info
 
+#todo move to tests
+def test_dstar_lite():
+    print "Testing dstar_lite..."
+    problem = problem_simple.copy()
+    result = dstar_lite(problem)
+    assert result == problem_simple_complete
+    assert problem == problem_simple_complete #check that problem was modified
+    print "dstar_lite tests passed!"
+
 # Test dstar_lite
-#test_dstar_lite()
+test_dstar_lite()

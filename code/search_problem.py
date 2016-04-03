@@ -14,6 +14,11 @@ class IncrementalSearchProblem(object):
 
     __str__ = __repr__
 
+    def __eq__(self, other):
+        return self._start_node == other._start_node \
+            and self._goal_node == other._goal_node \
+            and self._world == other._world
+
     def copy(self):
         return deepcopy(self)
 
