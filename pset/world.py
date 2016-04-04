@@ -213,3 +213,19 @@ class World: #todo add __str__/__repr__
     @property
     def ground_truth_history(self):
         return self._history_ground_truth
+    
+    def __eq__(self, other):
+        return (self._VISION_RADIUS == other._VISION_RADIUS
+                and self._time == other._time
+                and self._robot_position == other._robot_position
+                and self._path_travelled == other._path_travelled
+                and (self._grid_ground_truth == other._grid_ground_truth).all()
+                and self._goal_location == other._goal_location
+                and self._is_robot_at_goal == other._is_robot_at_goal
+                and (self._grid_belief_state == other._grid_belief_state).all()
+                #ignore the next two because they don't like equality checking:
+                #  "ValueError: The truth value of an array with more than one
+                #   element is ambiguous. Use a.any() or a.all()"
+#                and self._history_belief_state == other._history_belief_state
+#                and self._history_ground_truth == other._history_ground_truth
+                and self._history_intended_path == other._history_intended_path)
