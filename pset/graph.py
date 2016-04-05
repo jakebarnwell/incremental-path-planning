@@ -117,9 +117,10 @@ class Graph(object):
                              % map(str, (source, target)))
         return edge.weight
 
-    def get_changed_edges(self, other_graph): #todo edit docstring
+    def get_changed_edges(self, other_graph):
         """returns a set of tuples (my_edge, their_edge) containing
-        corresponding pairs of edges that differ between the two graphs"""
+        corresponding pairs of edges whose weights differ between the two graphs.
+        If an edge exists in only one graph, one value of the tuple will be None."""
         my_edges = deepcopy(self._edges)
         their_edges = deepcopy(other_graph._edges)
         changed_edges = set()

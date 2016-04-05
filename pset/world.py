@@ -2,7 +2,7 @@ from grid import *
 
 TOLERANCE = 0.01
 
-class World: #todo add __str__/__repr__
+class World:
     """
     A World object represents the belief-state of a robot. In
     particular, a World object stores what the world (as a grid)

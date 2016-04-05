@@ -34,7 +34,7 @@ class PriorityQueue():
         q.pop()         -- return the top item from the queue
         len(q)          -- number of items in q (also q.__len())
         item in q       -- does q contain item?
-    """ #todo clean up docstring
+    """
     def __init__(self, order=min, f=lambda x: x):
         update(self, A=[], order=order, f=f)
 
