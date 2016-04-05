@@ -151,7 +151,7 @@ class World:
         if time < 0 or time >= len(self._history_belief_state):
             raise ValueError("Invalid time. You supplied time={}. Time must be non-negative and no more than the current time t={}". \
             format(time, self._time))
-        grid_list = self._history_belief_state if not ground_truth else self._history_ground_truth
+        grid_list = self._history_belief_state if ground_truth == False else self._history_ground_truth
         grid = grid_list[time]
         future_path = self._history_intended_path[time]
         path_travelled = self._path_travelled[0:time+1]
@@ -164,17 +164,9 @@ class World:
 
         return axes
 
-    # @staticmethod #TODO fix implementation or delete commented code
-    # def draw_grid(what_grid, robot_position, path_travelled, intended_path):
-    #     grid = what_grid
-    #     axes = grid.draw()
-    #     grid.draw_cell_circle(axes, robot_position, color=COLOR["robot"])
-    #
-    #     return axes
-
-    def draw_all_path(self, time_step = 1):
+    def draw_all_path(self, time_step=1, ground_truth=False):
 	for time_index in range(0,self.time+1):
-		temp =	self.draw(at_time=time_index,animating=True)
+		temp =	self.draw(at_time=time_index,animating=True, ground_truth=ground_truth)
 		display.display(temp.get_figure())
 		display.clear_output(wait=True)
     		time_library.sleep(time_step)
@@ -213,7 +205,7 @@ class World:
     @property
     def ground_truth_history(self):
         return self._history_ground_truth
-    
+
     def __eq__(self, other):
         return (self._VISION_RADIUS == other._VISION_RADIUS
                 and self._time == other._time
