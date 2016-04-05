@@ -2,6 +2,15 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from copy import deepcopy
 
+def get_intended_path(next_step, goal, graph, g): #for D* Lite
+    """Uses g-values to reconstruct future planned path given intended next
+    step.  Returns a path as a list [next_step, ... , goal]"""
+    path = [next_step]
+    while path[-1] != goal:
+        path.append(min(graph.get_successors(path[-1]),
+                        key=lambda node: g[node]))
+    return path
+
 class NodeNotInGraph(Exception):
     def __init__(self, node):
         self.node = node
