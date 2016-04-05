@@ -271,5 +271,6 @@ def run_dstar_lite_hard_grid(dstar_lite):
     dstar_lite(problem)
     end_time = time.time()
     print "Robot reached goal in %s seconds\n" % str(end_time - start_time)
-    problem._world.draw_all_path()
-
+    # Instead of drawing all_path here, return world so the user can call draw_all_path:
+    return problem._world
+    #problem._world.draw_all_path()

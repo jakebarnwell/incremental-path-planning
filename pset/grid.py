@@ -102,6 +102,11 @@ class Grid(object):
         new_grid = Grid(num_cols, num_rows, self.figsize)
         return new_grid
 
+    def copy(self):
+        new_grid = self.clone_template()
+        new_grid.grid_array = self.get_grid_array().copy()
+        return new_grid
+
     @property
     def size(self):
         return self.grid_array.shape

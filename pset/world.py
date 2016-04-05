@@ -43,8 +43,8 @@ class World:
         # Stores history of belief states and ground truths. The 0th element is
         #  the initial state that this World object was constructed with, and
         #  the last element is the current state.
-        self._history_belief_state = [self._grid_belief_state]
-        self._history_ground_truth = [self._grid_ground_truth]
+        self._history_belief_state = [self._grid_belief_state.copy()]
+        self._history_ground_truth = [self._grid_ground_truth.copy()]
 
         # Stores history of "future paths" for the robot. These future paths
         #  are ones supplied in each update_world call, e.g. from the D* Lite
@@ -83,8 +83,8 @@ class World:
         self._update_belief_state()
 
         # Store the new belief state and ground truth into history
-        self._history_belief_state.append(self._grid_belief_state)
-        self._history_ground_truth.append(self._grid_ground_truth)
+        self._history_belief_state.append(self._grid_belief_state.copy())
+        self._history_ground_truth.append(self._grid_ground_truth.copy())
 
         # Store future path in future path history
         self._history_intended_path.append(intended_path)
@@ -142,7 +142,7 @@ class World:
         future path, if applicable.
 
         To draw the ground_truth world instead of the robot's viewpoint of
-        the world, use ground_true=True.
+        the world, use ground_truth=True.
 
         To draw the world as it was at some earlier point in time, use
         at_time=t where t is whatever time point you are interested in (0 <= t <= now).
@@ -151,7 +151,8 @@ class World:
         if time < 0 or time >= len(self._history_belief_state):
             raise ValueError("Invalid time. You supplied time={}. Time must be non-negative and no more than the current time t={}". \
             format(time, self._time))
-        grid_list = self._history_belief_state if ground_truth == False else self._history_ground_truth
+
+        grid_list = self._history_ground_truth if ground_truth == True else self._history_belief_state
         grid = grid_list[time]
         future_path = self._history_intended_path[time]
         path_travelled = self._path_travelled[0:time+1]
@@ -166,8 +167,10 @@ class World:
 
     def draw_all_path(self, time_step=1, ground_truth=False):
 	for time_index in range(0,self.time+1):
-		temp =	self.draw(at_time=time_index,animating=True, ground_truth=ground_truth)
-		display.display(temp.get_figure())
+		temp = self.draw(at_time=time_index,animating=True, ground_truth=ground_truth)
+		fig = temp.get_figure()
+		fig.set_size_inches(10,10)
+		display.display(fig)
 		display.clear_output(wait=True)
     		time_library.sleep(time_step)
 
