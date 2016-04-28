@@ -14,8 +14,10 @@ from d_star_lite.world import World
 from d_star_lit.grid import *
 from d_star_lite.queue import PriorityQueue
 from d_star_lite.graph import get_intended_path
+from d_star_lite.utils import *
 
 inf = float("inf")
+
 
 
 class DStarLiteNode():
@@ -24,6 +26,11 @@ class DStarLiteNode():
 
         # Parameters:
         self.fsm_mode = self.setupParameter("~grid_resolution",1.0)
+        self.heuristic = grid_heuristic
+
+        # State variables:
+        self.problem = None
+        
 
         # Subscribers:
         self.sub_pose = rospy.Subscriber("~pose", PoseWithCovarianceStamped, self.updatePose, queue_size=1)
@@ -43,6 +50,33 @@ class DStarLiteNode():
 
     def updateGraph(self, data):
         # callback for occupancy grid message
+
+    def initializeDStarLite(self):
+        # Get the start node, goal node, and graph from the IncrementalSearchProblem
+        self.start = self.problem.start_node
+        self.goal = self.problem.goal_node
+        self.graph = self.problem.get_graph()
+
+        # Set g=inf and rhs=inf for all nodes, except the goal node, which has rhs=0
+        self.g = {node:inf for node in self.graph.get_all_nodes()}
+        self.rhs = {node:inf for node in self.graph.get_all_nodes()}
+        self.rhs[goal] = 0
+
+        # Set the key modifier k_m to 0
+        self.key_modifier = 0
+
+        # Initialize the queue using the priority function calc_key
+        self.queue = PriorityQueue(f=lambda node: self.calc_key(node))
+        self.queue.insert(goal)
+
+    def calc_key(self, node):
+        return calc_key_helper(node, self.g, self.rhs, self.start, self.key_modifier)
+
+    def update_vertex(self, node):
+        return update_vertex_helper(node, self.g, self.rhs, self.goal, self.graph, self.queue)
+
+    def compute_shortest_path(self):
+        return compute_shortest_path_helper(self.g, self.rhs, self.start, self.goal, self.key_modifier, self.graph, self.queue)
 
     def onShutdown(self):
         rospy.loginfo("[DStarLiteNode] Shutdown.")
