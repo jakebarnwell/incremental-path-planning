@@ -59,3 +59,5 @@ def compute_shortest_path_helper(g, rhs, start, goal, key_modifier, graph, queue
             for next_node in graph.get_predecessors(node) + [node]:
                 update_vertex(next_node)
 
+def resolve_point_to_node_helper(point, graph):
+    return min(graph.get_all_nodes(), key = lamda node: math.sqrt((node[0]-point.x)**2 + (node[1]-point.y)**2))
