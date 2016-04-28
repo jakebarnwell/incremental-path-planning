@@ -11,7 +11,7 @@ from __future__ import division
 import math
 import numpy as np
 from d_star_lite.world import World
-from d_star_lit.grid import *
+from d_star_lite.grid import *
 from d_star_lite.queue import PriorityQueue
 from d_star_lite.graph import get_intended_path
 from d_star_lite.utils import *
