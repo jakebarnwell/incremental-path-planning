@@ -31,6 +31,7 @@ class DStarLiteNode():
         self.graph = None
         self.old_graph = None
         self.current_node = None
+        self.nex_node = None
         self.goal = None
         self.start = None
         self.last_start = None
@@ -108,7 +109,8 @@ class DStarLiteNode():
                                             + self.g[neighbor]))
         self.old_graph = self.graph.copy()
         intended_path = self.get_path()
-        self.publishNextPoint(intended_path[1])
+        self.next_node = intended_path[0]
+        self.publishNextPoint()
 
     def checkEdgesDStarLite(self):
         changed_edges = self.old_graph.get_changed_edges(self.graph)
@@ -125,8 +127,8 @@ class DStarLiteNode():
 
     def publishNextPoint(self, node):
         msg = MoveBaseActionGoal() 
-        msg.goal.target_pose.pose.point.x = node[0]
-        msg.goal.target_pose.pose.point.y = node[1]
+        msg.goal.target_pose.pose.point.x = self.next_node[0]
+        msg.goal.target_pose.pose.point.y = self.next_node[1]
         self.pub_goal.publish(msg)
         rospy.loginfo("[%s] Dispatched goal point: %s" %(self.node_name, node)
 
