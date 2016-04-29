@@ -24,7 +24,7 @@ class DStarLiteNode():
         self.node_name = rospy.get_name()
 
         # Parameters:
-        self.fsm_mode = self.setupParameter("~grid_resolution",1.0)
+        self.grid_res = self.setupParameter("~grid_resolution",0.2)
         self.heuristic = grid_heuristic
 
         # State variables:
@@ -64,7 +64,7 @@ class DStarLiteNode():
 
     def updateGraph(self, data):
         # callback function for map update, should produce self.graph
-        return 1
+        print "callback!"
 
     def updateGoal(self, data):
         goal_point = data.goal.target_pose.pose.point

@@ -5,7 +5,7 @@ from matplotlib.collections import LineCollection, PolyCollection
 from matplotlib.patches import Ellipse
 from graph import Graph
 import time as time_library
-from IPython import display
+#from IPython import display
 
 
 class WrongGridFormat(Exception):
@@ -178,60 +178,60 @@ class Grid(object):
 
     # DRAWING METHODS
 
-    def draw(self,animating = False):
-        cols, rows = self.size
-        minx, maxx = self.xlimits
-        miny, maxy = self.ylimits
+    #def draw(self,animating = False):
+    #    cols, rows = self.size
+    #    minx, maxx = self.xlimits
+    #    miny, maxy = self.ylimits
 
-        cwidth, cheight = self.cell_size
+    #    cwidth, cheight = self.cell_size
 
-        x = map(lambda i: minx + cwidth*i, range(cols+1))
-        y = map(lambda i: miny + cheight*i, range(rows+1))
+    #    x = map(lambda i: minx + cwidth*i, range(cols+1))
+    #    y = map(lambda i: miny + cheight*i, range(rows+1))
 
-	if(not animating):
-        	f = plt.figure(figsize=self.figsize)
-	else:
-		plt.clf()
-        hlines = np.column_stack(np.broadcast_arrays(x[0], y, x[-1], y))
-        vlines = np.column_stack(np.broadcast_arrays(x, y[0], x, y[-1]))
-        lines = np.concatenate([hlines, vlines]).reshape(-1, 2, 2)
-        line_collection = LineCollection(lines, color="black", linewidths=0.5)
-        ax = plt.gca()
-        ax.add_collection(line_collection)
-        ax.set_xlim(x[0]-1, x[-1]+1)
-        ax.set_ylim(y[0]-1, y[-1]+1)
-        plt.gca().set_aspect('equal', adjustable='box')
-        plt.axis('off')
-        self._draw_obstacles(plt.gca())
-        self._draw_start_goal(plt.gca())
+    #    if(not animating):
+    #    	f = plt.figure(figsize=self.figsize)
+    #    else:
+    #    	plt.clf()
+    #    hlines = np.column_stack(np.broadcast_arrays(x[0], y, x[-1], y))
+    #    vlines = np.column_stack(np.broadcast_arrays(x, y[0], x, y[-1]))
+    #    lines = np.concatenate([hlines, vlines]).reshape(-1, 2, 2)
+    #    line_collection = LineCollection(lines, color="black", linewidths=0.5)
+    #    ax = plt.gca()
+    #    ax.add_collection(line_collection)
+    #    ax.set_xlim(x[0]-1, x[-1]+1)
+    #    ax.set_ylim(y[0]-1, y[-1]+1)
+    #    plt.gca().set_aspect('equal', adjustable='box')
+    #    plt.axis('off')
+    #    self._draw_obstacles(plt.gca())
+    #    self._draw_start_goal(plt.gca())
 
-        return plt.gca()
+    #    return plt.gca()
 
-    def _draw_obstacles(self, axes):
-        verts = [self._cell_vertices(ix, iy) for ix,iy in self.get_cells_of_type(CELL_OBSTACLE)]
-        collection_recs = PolyCollection(verts, facecolors=COLOR["obstacle"])
-        axes.add_collection(collection_recs)
+    #def _draw_obstacles(self, axes):
+    #    verts = [self._cell_vertices(ix, iy) for ix,iy in self.get_cells_of_type(CELL_OBSTACLE)]
+    #    collection_recs = PolyCollection(verts, facecolors=COLOR["obstacle"])
+    #    axes.add_collection(collection_recs)
 
-    def _draw_start_goal(self, axes):
-        start_verts = [self._cell_vertices(ix, iy) for ix,iy in self.get_cells_of_type(CELL_START)]
-        goal_verts = [self._cell_vertices(ix, iy) for ix,iy in self.get_cells_of_type(CELL_GOAL)]
-        collection_recs = PolyCollection(start_verts, facecolors=COLOR["start"])
-        axes.add_collection(collection_recs)
-        collection_recs = PolyCollection(goal_verts, facecolors=COLOR["goal"])
-        axes.add_collection(collection_recs)
+    #def _draw_start_goal(self, axes):
+    #    start_verts = [self._cell_vertices(ix, iy) for ix,iy in self.get_cells_of_type(CELL_START)]
+    #    goal_verts = [self._cell_vertices(ix, iy) for ix,iy in self.get_cells_of_type(CELL_GOAL)]
+    #    collection_recs = PolyCollection(start_verts, facecolors=COLOR["start"])
+    #    axes.add_collection(collection_recs)
+    #    collection_recs = PolyCollection(goal_verts, facecolors=COLOR["goal"])
+    #    axes.add_collection(collection_recs)
 
-    def draw_cell_circle(self, axes, xy, size=0.6, **kwargs):
-        ix, iy = xy
-        x, y = self.cell_center(ix, iy)
-        xr, yr = size * self.cell_size[0], size * self.cell_size[1]
-        axes.add_patch(Ellipse((x,y), xr, yr, **kwargs))
+    #def draw_cell_circle(self, axes, xy, size=0.6, **kwargs):
+    #    ix, iy = xy
+    #    x, y = self.cell_center(ix, iy)
+    #    xr, yr = size * self.cell_size[0], size * self.cell_size[1]
+    #    axes.add_patch(Ellipse((x,y), xr, yr, **kwargs))
 
-    def draw_path(self, axes, path, *args, **kwargs):
-        # Path doesn't really make sense for 1 or 0 vertices
-        if len(path) > 1:
-            xy_coords = map(lambda idx: self.cell_center(*idx), path)
-            xx, yy = zip(*xy_coords)
-            axes.plot(xx, yy, *args, **kwargs)
+    #def draw_path(self, axes, path, *args, **kwargs):
+    #    # Path doesn't really make sense for 1 or 0 vertices
+    #    if len(path) > 1:
+    #        xy_coords = map(lambda idx: self.cell_center(*idx), path)
+    #        xx, yy = zip(*xy_coords)
+    #        axes.plot(xx, yy, *args, **kwargs)
 
     def to_graph(self):
         xmin, xmax = self.xlimits

@@ -148,43 +148,43 @@ class Graph(object):
         return deepcopy(self)
 
     # DRAWING METHODS
-    def draw(self, highlight_edges=None):
-        nxg = nx.DiGraph()
-        edges = [(e.source, e.target, {'weight':e.weight, 'inv_weight':1.0/e.weight}) for node_set in self._edges.values() for e in node_set]
-        nxg.add_edges_from(edges)
-        if len(self.node_positions) < len(self._nodes):
-            # Calculate positions for nodes whose pos is not specified.
-            pos = nx.spring_layout(nxg, weight='inv_weight', pos=self.node_positions, fixed=self.node_positions.keys() if self.node_positions else None)
-        else:
-            pos = self.node_positions
+    #def draw(self, highlight_edges=None):
+    #    nxg = nx.DiGraph()
+    #    edges = [(e.source, e.target, {'weight':e.weight, 'inv_weight':1.0/e.weight}) for node_set in self._edges.values() for e in node_set]
+    #    nxg.add_edges_from(edges)
+    #    if len(self.node_positions) < len(self._nodes):
+    #        # Calculate positions for nodes whose pos is not specified.
+    #        pos = nx.spring_layout(nxg, weight='inv_weight', pos=self.node_positions, fixed=self.node_positions.keys() if self.node_positions else None)
+    #    else:
+    #        pos = self.node_positions
 
-        f = plt.figure(figsize=(12,12))
-        plt.gca().set_aspect('equal', adjustable='box')
-        nx.draw_networkx_nodes(nxg, pos, node_color='w')
-        nx.draw_networkx_edges(nxg, pos, edges)
-        nx.draw_networkx_labels(nxg, pos)
-        edge_labels=dict([((u,v,),"%s" % d['weight'])
-                 for u,v,d in nxg.edges(data=True)])
-        nx.draw_networkx_edge_labels(nxg, pos, edge_labels=edge_labels)
+    #    f = plt.figure(figsize=(12,12))
+    #    plt.gca().set_aspect('equal', adjustable='box')
+    #    nx.draw_networkx_nodes(nxg, pos, node_color='w')
+    #    nx.draw_networkx_edges(nxg, pos, edges)
+    #    nx.draw_networkx_labels(nxg, pos)
+    #    edge_labels=dict([((u,v,),"%s" % d['weight'])
+    #             for u,v,d in nxg.edges(data=True)])
+    #    nx.draw_networkx_edge_labels(nxg, pos, edge_labels=edge_labels)
 
 
-        if highlight_edges:
-            nx.draw_networkx_edges(nxg, pos, highlight_edges, edge_color='r')
+    #    if highlight_edges:
+    #        nx.draw_networkx_edges(nxg, pos, highlight_edges, edge_color='r')
 
-        plt.axis('off')
-        plt.show()
+    #    plt.axis('off')
+    #    plt.show()
 
-    def draw_edges(self, edges):
-        nx.draw_networkx_edges(nxg, pos, edges, edge_color='r')
-        reduced_labels = {(u,v): edge_labels[(u,v)] for u,v,_ in edges}
-        nx.draw_networkx_edge_labels(nxg, pos, edge_labels=reduced_labels, font_color='r')
+    #def draw_edges(self, edges):
+    #    nx.draw_networkx_edges(nxg, pos, edges, edge_color='r')
+    #    reduced_labels = {(u,v): edge_labels[(u,v)] for u,v,_ in edges}
+    #    nx.draw_networkx_edge_labels(nxg, pos, edge_labels=reduced_labels, font_color='r')
 
-        reduced_nodes = set([u for u,_,_ in edges])
-        reduced_nodes.update([v for _,v,_ in edges])
-        # nx.draw_networkx_nodes(nxg, pos, nodelist=reduced_nodes,  node_color='r')
-        red_labels = {n:n for n in reduced_nodes}
-        print red_labels
-        nx.draw_networkx_labels(nxg, pos, labels=red_labels, font_color='r')
+    #    reduced_nodes = set([u for u,_,_ in edges])
+    #    reduced_nodes.update([v for _,v,_ in edges])
+    #    # nx.draw_networkx_nodes(nxg, pos, nodelist=reduced_nodes,  node_color='r')
+    #    red_labels = {n:n for n in reduced_nodes}
+    #    print red_labels
+    #    nx.draw_networkx_labels(nxg, pos, labels=red_labels, font_color='r')
 
     def highlight_edges(self, edges):
         nx.draw_networkx_edges(nxg, pos, edges, edge_color='r')

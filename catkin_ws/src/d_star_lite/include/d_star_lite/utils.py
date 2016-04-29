@@ -2,7 +2,7 @@ from __future__ import division
 import math
 import numpy as np
 from d_star_lite.world import World
-from d_star_lit.grid import *
+from d_star_lite.grid import *
 from d_star_lite.queue import PriorityQueue
 from d_star_lite.graph import get_intended_path
 
@@ -60,4 +60,6 @@ def compute_shortest_path_helper(g, rhs, start, goal, key_modifier, graph, queue
                 update_vertex(next_node)
 
 def resolve_point_to_node_helper(point, graph):
-    return min(graph.get_all_nodes(), key = lamda node: math.sqrt((node[0]-point.x)**2 + (node[1]-point.y)**2))
+    #TODO: fix this. Sintax error
+    #return min(graph.get_all_nodes(), key = lamda node: math.sqrt((node[0]-point.x)**2 + (node[1]-point.y)**2))
+    return 0
