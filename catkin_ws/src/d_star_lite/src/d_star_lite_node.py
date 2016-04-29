@@ -149,7 +149,7 @@ class DStarLiteNode():
         return get_intended_path(self.start, self.goal, self.graph, self.g)
 
     def calc_key(self, node):
-        return calc_key_helper(node, self.g, self.rhs, self.start, self.key_modifier)
+        return calc_key_helper(node, self.g, self.rhs, self.start, self.key_modifier, heuristic=self.heuristic)
 
     def update_vertex(self, node):
         return update_vertex_helper(node, self.g, self.rhs, self.goal, self.graph, self.queue)
