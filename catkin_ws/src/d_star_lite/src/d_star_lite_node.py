@@ -24,7 +24,8 @@ class DStarLiteNode():
         self.node_name = rospy.get_name()
 
         # Parameters:
-        self.grid_res = self.setupParameter("~grid_resolution",0.2)
+        self.grid_resolution = self.setupParameter("~grid_resolution",0.2)
+        self.occupancy_threshold = self.setupParameter("~occupancy_threshold",0.1)
         self.heuristic = grid_heuristic
 
         # State variables:
@@ -64,7 +65,24 @@ class DStarLiteNode():
 
     def updateGraph(self, data):
         # callback function for map update, should produce self.graph
-        print "callback!"
+        new_width = int(round((data.info.width)*data.info.resolution/self.grid_resolution));
+        new_height = int(round((data.info.height)*data.info.resolution/self.grid_resolution));
+        new_grid = np.zeros((new_width,new_height))
+        for index_x in range(new_width):
+            for index_y in range(new_height):
+
+                original_map_x = int(round(index_x *self.grid_resolution/data.info.resolution))
+                if original_map_x > data.info.width:
+                    original_map_x = data.info.width
+                
+                original_map_y = int(round(index_y *self.grid_resolution/data.info.resolution))
+                if original_map_y > data.info.height:
+                    original_map_y = data.info.height
+                
+                if data.data[original_map_x*data.info.width+original_map_y] > self.occupancy_threshold:
+                    new_grid[index_x][index_y] = 1
+        self.grid = new_grid
+
 
     def updateGoal(self, data):
         goal_point = data.goal.target_pose.pose.point
