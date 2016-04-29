@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import division
 import sys
 import rospy
 
@@ -7,7 +8,6 @@ from geometry_msgs.msg import PoseWithCovarianceStamped
 from nav_msgs.msg import OccupancyGrid
 from move_base_msgs.msg import MoveBaseActionGoal
 
-from __future__ import division
 import math
 import numpy as np
 from d_star_lite.world import World
@@ -64,6 +64,7 @@ class DStarLiteNode():
 
     def updateGraph(self, data):
         # callback function for map update, should produce self.graph
+        return 1
 
     def updateGoal(self, data):
         goal_point = data.goal.target_pose.pose.point
@@ -130,13 +131,13 @@ class DStarLiteNode():
         msg.goal.target_pose.pose.point.x = self.next_node[0]
         msg.goal.target_pose.pose.point.y = self.next_node[1]
         self.pub_goal.publish(msg)
-        rospy.loginfo("[%s] Dispatched goal point: %s" %(self.node_name, node)
+        rospy.loginfo("[%s] Dispatched goal point: %s" %(self.node_name, node))
 
     def check_ready(self):
         if self.graph == None:
             rospy.loginfo("[%s] Not ready for planning: no graph." %(self.node_name))
             return False
-        if self.current_node = None:
+        if self.current_node == None:
             rospy.loginfo("[%s] Not ready for planning: not localized." %(self.node_name))
             return False
         if self.goal == None:
