@@ -1,9 +1,9 @@
 <launch>
+	<remap from="~grid" to="/move_base/global_costmap/costmap"/>
+	<remap from="~pose" to="/amcl_pose"/>
+	<remap from="~goal" to="/move_base/goal"/>
+	<remap from="~goal_request" to="/move_base_simple/goal"/>
 	<node name="d_star_lite_node" pkg="d_star_lite"	type="d_star_lite_node.py" output="screen">
-		<remap from="~grid" to="/move_base/global_costmap/costmap"/>	
 	</node>
-
-
-
 
 </launch>

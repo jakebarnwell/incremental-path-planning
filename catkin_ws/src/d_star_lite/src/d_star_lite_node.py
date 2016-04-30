@@ -4,7 +4,7 @@ from __future__ import division
 import sys
 import rospy
 
-from geometry_msgs.msg import PoseWithCovarianceStamped
+from geometry_msgs.msg import PoseWithCovarianceStamped, PoseStamped
 from nav_msgs.msg import OccupancyGrid
 from move_base_msgs.msg import MoveBaseActionGoal
 
@@ -44,7 +44,7 @@ class DStarLiteNode():
         # Subscribers:
         self.sub_pose = rospy.Subscriber("~pose", PoseWithCovarianceStamped, self.updatePose, queue_size=1)
         self.sub_grid = rospy.Subscriber("~grid", OccupancyGrid, self.updateGraph, queue_size = 1)
-        self.sub_goal = rospy.Subscriber("~goal_request", MoveBaseActionGoal, self.updateGoal, queue_size=1)
+        self.sub_goal = rospy.Subscriber("~goal_request", PoseStamped, self.updateGoal, queue_size=1)
 
         # Publishers:
         self.pub_goal = rospy.Publisher("~goal", MoveBaseActionGoal, queue_size=1, latch=True)
@@ -56,7 +56,7 @@ class DStarLiteNode():
         return value
 
     def updatePose(self, data):
-        current_point = data.pose.pose.point
+        current_point = data.pose.pose.position
         self.current_node = self.resolve_point_to_node(current_point)
         if (self.current_node == self.goal):
             self.plan_in_progress = False
@@ -85,7 +85,7 @@ class DStarLiteNode():
 
 
     def updateGoal(self, data):
-        goal_point = data.goal.target_pose.pose.point
+        goal_point = data.pose.position
         self.goal = self.resolve_point_to_node(goal_point)
         if self.check_ready():
             rospy.loginfo("[%s] Starting D-star Lite plan." %(self.node_name))
