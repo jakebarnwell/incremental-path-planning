@@ -59,8 +59,10 @@ class DStarLiteNode():
         current_point = data.pose.pose.position
         self.current_node = self.resolve_point_to_node(current_point)
         if (self.current_node == self.goal):
+            rospy.loginfo("[%s] Reached goal." %(self.node_name))
             self.plan_in_progress = False
         elif self.plan_in_progress and self.current_node == self.next_node:
+            rospy.loginfo("[%s] Reached %s, performing next D* Lite iteration." %(self.node_name,self.next_node))
             self.iterateDStarLite()
 
     def updateGraph(self, data):
@@ -118,6 +120,7 @@ class DStarLiteNode():
         self.getPathDStarLite()
 
     def getPathDStarLite(self):
+        rospy.loginfo("[%s] Computing shortest path." %(self.node_name))
         self.compute_shortest_path()
         if self.g[start] == inf:
             self.plan_in_progress = False
@@ -134,6 +137,7 @@ class DStarLiteNode():
     def checkEdgesDStarLite(self):
         changed_edges = self.old_graph.get_changed_edges(self.graph)
         if changed_edges:
+            rospy.loginfo("[%s] Edge changes detected, performing updates." %(self.node_name))
             self.key_modifier = self.key_modifier + self.heuristic(self.last_start, self.start)
             self.last_start = self.start
             for (old_edge, new_edge) in changed_edges:
@@ -143,6 +147,8 @@ class DStarLiteNode():
                     raise NotImplementedError("Edge addition not yet supported")
                 else: #old edge was deleted
                     raise NotImplementedError("Edge deletion not yet supported")
+        else:
+            rospy.loginfo("[%s] No edge changes detected." %(self.node_name))
 
     def publishNextPoint(self, node):
         msg = MoveBaseActionGoal() 
