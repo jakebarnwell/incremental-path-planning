@@ -13,7 +13,7 @@ import numpy as np
 from d_star_lite.world import World
 from d_star_lite.grid import *
 from d_star_lite.queue import PriorityQueue
-from d_star_lite.graph import get_intended_path
+from d_star_lite.graph import Graph, get_intended_path
 from d_star_lite.utils import *
 
 inf = float("inf")
@@ -26,6 +26,7 @@ class DStarLiteNode():
         # Parameters:
         self.grid_resolution = self.setupParameter("~grid_resolution",0.2)
         self.occupancy_threshold = self.setupParameter("~occupancy_threshold",0.1)
+        self.set_viz_data = self.setupParameter("~set_viz_data",False)
         self.heuristic = grid_heuristic
 
         # State variables:
@@ -84,7 +85,7 @@ class DStarLiteNode():
                 if data.data[original_map_x*data.info.width+original_map_y] > self.occupancy_threshold:
                     new_grid[index_x][index_y] = 1
         self.grid = new_grid
-
+        self.graph = Graph.fromArray(self.grid, set_viz_data=self.set_viz_data)
 
     def updateGoal(self, data):
         goal_point = data.pose.position
