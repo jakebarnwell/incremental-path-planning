@@ -1,6 +1,7 @@
 import networkx as nx
 import matplotlib.pyplot as plt
 from copy import deepcopy
+import numpy as np
 
 def get_intended_path(next_step, goal, graph, g): #for D* Lite
     """Uses g-values to reconstruct future planned path given intended next
@@ -52,6 +53,89 @@ class Graph(object):
 
     def __contains__(self, node):
         return node in self._nodes
+
+    @classmethod
+    def fromArray(grid_class, numpy_2d_array, set_viz_data=True):
+        """
+        Creates a Graph object from a 2D numpy array. The 2d numpy
+        array must be at least 1x1. The entries of the array must
+        be either 0 or 1.
+        Returns the Graph object created.
+        Enable the set_viz_data flag if you want to allow for the
+        visualization/drawing of this graph. True is the default. However,
+        in production code, you may want to set this flag to False to
+        speed up the creation of this Graph.
+        This method should be reasonably efficient.
+        """
+        # A lot of this is copied from the grid.to_graph method
+
+        # Some easy arrays to test this function on:
+        #   np.array([[0,1,1,0],[1,0,1,1],[1,1,0,0],[0,1,0,1],[0,0,1,1]])
+        #   np.array([[1,0,0,0],[1,0,0,0],[0,0,0,1],[0,0,0,1],[0,0,0,1]])
+        # The visualization code should show these as written, i.e.
+        #  5x4 matrices (5 rows, 4 columns), with the origin being top
+        #  left.
+
+        # Make sure this is a 2D array
+        assert len(numpy_2d_array.shape) == 2
+        height, width = numpy_2d_array.shape
+
+        _DELTA = [(1,1),(0,1),(-1,1),(-1,0)]
+        def efficient_neighbors(row, col):
+            """
+            Returns the *valid* north-east, east, south-east, and south neighbors
+            of this cell as a list of tuples. If any such neighbors don't
+            exist (e.g. because the current node is on the right edge) the
+            given neighbor is not included.
+            """
+            n = [(row + d[0], col + d[1]) for d in _DELTA]
+            n = filter(lambda nn: 0<=nn[0]<height and 0<=nn[1]<width, n)
+            return n
+
+        graph = grid_class()
+
+        # Add all numpy array indices as nodes. I hate repeating code but
+        #  I separate the two cases, since I prefer not to put if-statements
+        #  inside the loop; maybe I'm being dumb about this.
+        if set_viz_data:
+            node_positions = {}
+            for col in range(width):
+                for row in range(height):
+                    graph.add_node((row,col))
+                    # To add the physical drawing positions, we
+                    #    1) swap row and col, and
+                    #    2) negate the row
+                    # since the drawing code considers nodes as
+                    #      (x,y), origin at bottom left
+                    # instead of
+                    #      (row,col), origin at top left
+                    node_positions[(row,col)] = (col,-row)
+            graph.set_node_positions(node_positions)
+        else:
+            for col in range(width):
+                for row in range(height):
+                    graph.add_node((row,col))
+
+        # Add bi-directional edges between the 8 cardinal+ordinal neighbors.
+        #  We need to do this in an efficient way, so let's go top left to
+        #  bottom right, adding bi-directional edges to each of the NE, E, SE,
+        #  and S neighbors.23
+        obstacles = zip(*np.where(numpy_2d_array == 1))
+        _WEIGHTS = [1, np.inf, np.inf] # "Wtf are you doing Jake?"
+        for c in range(width):
+            for r in range(height):
+                # From this node (col, row), add up to 4 bidirectional edges
+                #  to the efficient neighbors; the edges have weight 1 or infty
+                #  depending on if this node or the neighbor node is an obstacle
+                #  (or both, or neither).
+                for n in efficient_neighbors(r, c):
+                    graph.add_edge((r,c), n, weight=_WEIGHTS[numpy_2d_array[r,c]+numpy_2d_array[n[0],n[1]]], bidirectional=True)
+                    # Note the use of addition of the two numpy entry values
+                    #  instead of multlipication: Possible values using addition
+                    #  are {0,1,2} while possible values doing multiplication are
+                    #  {0,1}. However, addition is about 10% faster...
+
+        return graph
 
     def get_all_nodes(self):
         return self._nodes.copy()
@@ -197,4 +281,3 @@ class Graph(object):
         red_labels = {n:n for n in reduced_nodes}
         print red_labels
         nx.draw_networkx_labels(nxg, pos, labels=red_labels, font_color='r')
-
