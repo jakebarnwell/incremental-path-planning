@@ -32,6 +32,7 @@ class DStarLiteNode():
         # State variables:
         self.graph = None
         self.old_graph = None
+        self.graph_initialized = False
         self.current_node = None
         self.nex_node = None
         self.goal = None
@@ -58,13 +59,15 @@ class DStarLiteNode():
 
     def updatePose(self, data):
         current_point = data.pose.pose.position
-        self.current_node = self.resolve_point_to_node(current_point)
-        if (self.current_node == self.goal):
-            rospy.loginfo("[%s] Reached goal." %(self.node_name))
-            self.plan_in_progress = False
-        elif self.plan_in_progress and self.current_node == self.next_node:
-            rospy.loginfo("[%s] Reached %s, performing next D* Lite iteration." %(self.node_name,self.next_node))
-            self.iterateDStarLite()
+        if self.graph_initialized:
+            self.current_node = self.resolve_point_to_node(current_point)
+            if self.plan_in_progress:
+                if self.current_node == self.goal:
+                    rospy.loginfo("[%s] Reached goal." %(self.node_name))
+                    self.plan_in_progress = False
+                elif self.current_node == self.next_node:
+                    rospy.loginfo("[%s] Reached %s, performing next D* Lite iteration." %(self.node_name,self.next_node))
+                    self.iterateDStarLite()
 
     def updateGraph(self, data):
         # callback function for map update, should produce self.graph
@@ -85,12 +88,14 @@ class DStarLiteNode():
                 if data.data[original_map_x*data.info.width+original_map_y] > self.occupancy_threshold:
                     new_grid[index_x][index_y] = 1
         self.grid = new_grid
-        self.graph = Graph.fromArray(self.grid, set_viz_data=self.set_viz_data)
+        self.graph = Graph.fromArray(self.grid.astype(int), set_viz_data=self.set_viz_data)
+        if not self.graph_initialized:
+            self.graph_initialized = True
 
     def updateGoal(self, data):
         goal_point = data.pose.position
-        self.goal = self.resolve_point_to_node(goal_point)
         if self.check_ready():
+            self.goal = self.resolve_point_to_node(goal_point)
             rospy.loginfo("[%s] Starting D-star Lite plan." %(self.node_name))
             self.startDStarLite()
 
@@ -159,7 +164,7 @@ class DStarLiteNode():
         rospy.loginfo("[%s] Dispatched goal point: %s" %(self.node_name, node))
 
     def check_ready(self):
-        if self.graph == None:
+        if not self.graph_initialized:
             rospy.loginfo("[%s] Not ready for planning: no graph." %(self.node_name))
             return False
         if self.current_node == None:
