@@ -34,6 +34,7 @@ class DStarLiteNode():
         self.old_graph = None
         self.graph_initialized = False
         self.current_node = None
+        self.current_point = None
         self.nex_node = None
         self.goal = None
         self.start = None
@@ -58,9 +59,9 @@ class DStarLiteNode():
         return value
 
     def updatePose(self, data):
-        current_point = data.pose.pose.position
+        self.current_point = data.pose.pose.position
         if self.graph_initialized:
-            self.current_node = self.resolve_point_to_node(current_point)
+            self.current_node = self.resolve_point_to_node(self.current_point)
             if self.plan_in_progress:
                 if self.current_node == self.goal:
                     rospy.loginfo("[%s] Reached goal." %(self.node_name))
@@ -91,11 +92,15 @@ class DStarLiteNode():
         self.graph = Graph.fromArray(self.grid.astype(int), set_viz_data=self.set_viz_data)
         if not self.graph_initialized:
             self.graph_initialized = True
+        if self.current_point:
+            self.current_node = self.resolve_point_to_node(self.current_point)
 
     def updateGoal(self, data):
         goal_point = data.pose.position
-        if self.check_ready():
+        if self.graph_initialized:
             self.goal = self.resolve_point_to_node(goal_point)
+            rospy.loginfo("[%s] Received goal point (%s,%s), resolved to node %s." %(self.node_name,goal_point.x,goal_point.y,self.goal))
+        if self.check_ready():
             rospy.loginfo("[%s] Starting D-star Lite plan." %(self.node_name))
             self.startDStarLite()
 
@@ -119,7 +124,7 @@ class DStarLiteNode():
 
         # Initialize the queue using the priority function calc_key
         self.queue = PriorityQueue(f=lambda node: self.calc_key(node))
-        self.queue.insert(goal)
+        self.queue.insert(self.goal)
 
     def iterateDStarLite(self):
         self.checkEdgesDStarLite()
@@ -128,7 +133,7 @@ class DStarLiteNode():
     def getPathDStarLite(self):
         rospy.loginfo("[%s] Computing shortest path." %(self.node_name))
         self.compute_shortest_path()
-        if self.g[start] == inf:
+        if self.g[self.start] == inf:
             self.plan_in_progress = False
             rospy.loginfo("[%s] No feasible path." %(self.node_name))
             return
@@ -156,7 +161,7 @@ class DStarLiteNode():
         else:
             rospy.loginfo("[%s] No edge changes detected." %(self.node_name))
 
-    def publishNextPoint(self, node):
+    def publishNextPoint(self):
         msg = MoveBaseActionGoal() 
         msg.goal.target_pose.pose.point.x = self.next_node[0]
         msg.goal.target_pose.pose.point.y = self.next_node[1]
