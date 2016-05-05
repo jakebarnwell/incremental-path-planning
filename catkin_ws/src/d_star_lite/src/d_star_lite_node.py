@@ -201,9 +201,9 @@ class DStarLiteNode():
         msg.goal.target_pose.pose.position.y = y_next
         msg.goal.target_pose.pose.position.z = 0
         msg.goal.target_pose.pose.orientation.x = 0
-        msg.goal.target_pose.pose.orientation.y = sin(w_next/2)
-        msg.goal.target_pose.pose.orientation.z = 0
-        msg.goal.target_pose.pose.orientation.w = cos(w_next/2)
+        msg.goal.target_pose.pose.orientation.y = 0
+        msg.goal.target_pose.pose.orientation.z = math.sin(w_next/2)
+        msg.goal.target_pose.pose.orientation.w = math.cos(w_next/2)
         self.pub_goal.publish(msg)
         rospy.loginfo("[%s] Dispatched goal point." %(self.node_name))
 
