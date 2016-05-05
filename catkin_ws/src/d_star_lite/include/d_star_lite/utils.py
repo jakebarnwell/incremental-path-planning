@@ -59,6 +59,13 @@ def compute_shortest_path_helper(g, rhs, start, goal, key_modifier, graph, queue
             for next_node in graph.get_predecessors(node) + [node]:
                 update_vertex(next_node)
 
-def resolve_point_to_node_helper(point, graph):
-    return min(graph.get_all_nodes(), key = lambda node: math.sqrt((node[0]-point.x)**2 + (node[1]-point.y)**2))
-    return 0
+def resolve_point_to_node_helper(point, graph, grid_res):
+    #return min(graph.get_all_nodes(), key = lambda node: math.sqrt((node[0]-point.x)**2 + (node[1]-point.y)**2))
+    node_x = int(round(point.x/grid_res))
+    node_y = int(round(point.y/grid_res))
+    return (node_x,node_y)
+
+def convert_node_to_point_helper(node, grid_res):
+    x = node[0]*grid_res
+    y = node[1]*grid_res
+    return (x,y)

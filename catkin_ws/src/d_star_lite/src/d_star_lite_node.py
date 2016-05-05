@@ -24,7 +24,6 @@ class DStarLiteNode():
         self.node_name = rospy.get_name()
 
         # Parameters:
-        self.frame_id = self.setupParameter("~frame_id",'map')
         self.grid_resolution = self.setupParameter("~grid_resolution",0.4) #0.2
         self.occupancy_threshold = self.setupParameter("~occupancy_threshold",0.1)
         self.set_viz_data = self.setupParameter("~set_viz_data",False)
@@ -34,6 +33,7 @@ class DStarLiteNode():
         self.graph = None
         self.old_graph = None
         self.graph_initialized = False
+        self.frame_id = None
         self.current_node = None
         self.current_point = None
         self.nex_node = None
@@ -75,7 +75,8 @@ class DStarLiteNode():
 
     def updateGraph(self, data):
         # callback function for map update, should produce self.graph
-        rospy.loginfo("[%s] Received new grid, shape: (%s,%s), resolution: %s" %(self.node_name,data.info.width,data.info.height,data.info.resolution))
+        self.frame_id = data.header.frame_id
+        rospy.loginfo("[%s] Received new grid, shape: (%s,%s), resolution: %s, frame_id: %s" %(self.node_name,data.info.width,data.info.height,data.info.resolution, self.frame_id))
         new_width = int(round((data.info.width)*data.info.resolution/self.grid_resolution));
         new_height = int(round((data.info.height)*data.info.resolution/self.grid_resolution));
         new_grid = np.zeros((new_width,new_height))
@@ -93,7 +94,7 @@ class DStarLiteNode():
                 if data.data[original_map_x*data.info.width+original_map_y] > self.occupancy_threshold:
                     new_grid[index_x][index_y] = 1
         self.grid = new_grid
-        rospy.loginfo("[%s] Downsampled grid, new shape: %s" %(self.node_name,self.grid.shape))
+        rospy.loginfo("[%s] Downsampled grid, new shape: %s, new resolution: %s" %(self.node_name,self.grid.shape,self.grid_resolution))
 
         rospy.loginfo("[%s] Converting grid to graph..." %(self.node_name))
         start_time = rospy.get_time()
@@ -152,7 +153,7 @@ class DStarLiteNode():
             self.plan_in_progress = False
             rospy.loginfo("[%s] No feasible path." %(self.node_name))
             return
-        rospy.loginfo("[%s] Computed shortest path (%s s), dispatching next point..." %(self.node_name, total_time))        
+        rospy.loginfo("[%s] Computed shortest path (%s s), extracting next node..." %(self.node_name, total_time))        
         start_time = rospy.get_time()
         self.start = min(self.graph.get_successors(self.start),
                     key = lambda neighbor: (self.graph.get_edge_weight(self.start, neighbor)
@@ -160,14 +161,18 @@ class DStarLiteNode():
         self.old_graph = self.graph.copy()
         intended_path = self.get_path()
         self.next_node = intended_path[0]
-        self.publishNextPoint()
         total_time = rospy.get_time() - start_time
-        rospy.loginfo("[%s] Dispatched goal point (%s s): %s" %(self.node_name, total_time, self.next_node))
+        rospy.loginfo("[%s] Extracted next node (%s s): %s" %(self.node_name, total_time, self.next_node))
+        self.publishNextPoint()
 
     def checkEdgesDStarLite(self):
+        rospy.loginfo("[%s] Checking for edge changes..." %(self.node_name))
+        start_time = rospy.get_time()
         changed_edges = self.old_graph.get_changed_edges(self.graph)
+        total_time = rospy.get_time() - start_time
         if changed_edges:
-            rospy.loginfo("[%s] Edge changes detected, performing updates." %(self.node_name))
+            rospy.loginfo("[%s] Edge changes detected (%s s), performing updates..." %(self.node_name,total_time))
+            start_time = rospy.get_time()
             self.key_modifier = self.key_modifier + self.heuristic(self.last_start, self.start)
             self.last_start = self.start
             for (old_edge, new_edge) in changed_edges:
@@ -177,20 +182,26 @@ class DStarLiteNode():
                     raise NotImplementedError("Edge addition not yet supported")
                 else: #old edge was deleted
                     raise NotImplementedError("Edge deletion not yet supported")
+            total_time = rospy.get_time() - start_time
+            rospy.loginfo("[%s] Updates complete (%s s)." %(self.node_name,total_time))
         else:
-            rospy.loginfo("[%s] No edge changes detected." %(self.node_name))
+            rospy.loginfo("[%s] No edge changes detected (%s s)." %(self.node_name,total_time))
 
     def publishNextPoint(self):
+        next_x, next_y = self.convert_node_to_point(self.next_node)
+        rospy.loginfo("[%s] Converted next node to point: (%s,%s)" %(self.node_name, next_x, next_y))
+
         msg = MoveBaseActionGoal() 
         msg.goal.target_pose.header.frame_id = self.frame_id
-        msg.goal.target_pose.pose.position.x = self.next_node[0]
-        msg.goal.target_pose.pose.position.y = self.next_node[1]
+        msg.goal.target_pose.pose.position.x = next_x
+        msg.goal.target_pose.pose.position.y = next_y
         msg.goal.target_pose.pose.position.z = 0
         msg.goal.target_pose.pose.orientation.x = 0
         msg.goal.target_pose.pose.orientation.y = 0
         msg.goal.target_pose.pose.orientation.z = 1
         msg.goal.target_pose.pose.orientation.w = 0.5
         self.pub_goal.publish(msg)
+        rospy.loginfo("[%s] Dispatched goal point." %(self.node_name))
 
     def check_ready(self):
         if not self.graph_initialized:
@@ -218,7 +229,10 @@ class DStarLiteNode():
         return compute_shortest_path_helper(self.g, self.rhs, self.start, self.goal, self.key_modifier, self.graph, self.queue)
 
     def resolve_point_to_node(self, point):
-        return resolve_point_to_node_helper(point, self.graph)
+        return resolve_point_to_node_helper(point, self.graph, self.grid_resolution)
+
+    def convert_node_to_point(self, node):
+        return convert_node_to_point_helper(node, self.grid_resolution)
 
     def onShutdown(self):
         rospy.loginfo("[%s] Shutdown." %(self.node_name))
