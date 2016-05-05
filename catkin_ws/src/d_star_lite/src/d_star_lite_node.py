@@ -36,7 +36,7 @@ class DStarLiteNode():
         self.frame_id = None
         self.current_node = None
         self.current_point = None
-        self.nex_node = None
+        self.next_node = None
         self.goal = None
         self.start = None
         self.last_start = None
@@ -44,6 +44,7 @@ class DStarLiteNode():
         self.rhs = None
         self.key_modifier = 0
         self.plan_in_progress = False
+        self.map_displacement = None
 
         # Subscribers:
         self.sub_pose = rospy.Subscriber("~pose", PoseWithCovarianceStamped, self.updatePose, queue_size=1)
@@ -77,6 +78,8 @@ class DStarLiteNode():
         # callback function for map update, should produce self.graph
         self.frame_id = data.header.frame_id
         rospy.loginfo("[%s] Received new grid, shape: (%s,%s), resolution: %s, frame_id: %s" %(self.node_name,data.info.width,data.info.height,data.info.resolution, self.frame_id))
+        rospy.loginfo("Map translation: %s",data.info.origin)
+        self.map_displacement = data.info.origin.position
         new_width = int(round((data.info.width)*data.info.resolution/self.grid_resolution));
         new_height = int(round((data.info.height)*data.info.resolution/self.grid_resolution));
         new_grid = np.zeros((new_width,new_height))
@@ -198,9 +201,9 @@ class DStarLiteNode():
         msg.goal.target_pose.pose.position.y = y_next
         msg.goal.target_pose.pose.position.z = 0
         msg.goal.target_pose.pose.orientation.x = 0
-        msg.goal.target_pose.pose.orientation.y = 0
-        msg.goal.target_pose.pose.orientation.z = 1
-        msg.goal.target_pose.pose.orientation.w = w_next
+        msg.goal.target_pose.pose.orientation.y = sin(w_next/2)
+        msg.goal.target_pose.pose.orientation.z = 0
+        msg.goal.target_pose.pose.orientation.w = cos(w_next/2)
         self.pub_goal.publish(msg)
         rospy.loginfo("[%s] Dispatched goal point." %(self.node_name))
 
@@ -235,10 +238,10 @@ class DStarLiteNode():
         return compute_shortest_path_helper(self.g, self.rhs, self.start, self.goal, self.key_modifier, self.graph, self.queue)
 
     def resolve_point_to_node(self, point):
-        return resolve_point_to_node_helper(point, self.graph, self.grid_resolution)
+        return resolve_point_to_node_helper(point, self.graph, self.grid_resolution,self.map_displacement)
 
     def convert_node_to_point(self, node):
-        return convert_node_to_point_helper(node, self.grid_resolution)
+        return convert_node_to_point_helper(node, self.grid_resolution,self.map_displacement)
 
     def onShutdown(self):
         rospy.loginfo("[%s] Shutdown." %(self.node_name))
