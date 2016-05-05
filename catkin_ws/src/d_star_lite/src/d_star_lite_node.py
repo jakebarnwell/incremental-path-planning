@@ -24,7 +24,7 @@ class DStarLiteNode():
         self.node_name = rospy.get_name()
 
         # Parameters:
-        self.grid_resolution = self.setupParameter("~grid_resolution",0.4) #0.2
+        self.grid_resolution = self.setupParameter("~grid_resolution",1.0) #0.2
         self.occupancy_threshold = self.setupParameter("~occupancy_threshold",0.1)
         self.set_viz_data = self.setupParameter("~set_viz_data",False)
         self.heuristic = grid_heuristic
@@ -188,20 +188,26 @@ class DStarLiteNode():
             rospy.loginfo("[%s] No edge changes detected (%s s)." %(self.node_name,total_time))
 
     def publishNextPoint(self):
-        next_x, next_y = self.convert_node_to_point(self.next_node)
-        rospy.loginfo("[%s] Converted next node to point: (%s,%s)" %(self.node_name, next_x, next_y))
+        x_next, y_next = self.convert_node_to_point(self.next_node)
+        w_next = self.computeNextOrientation(x_next,y_next)
+        rospy.loginfo("[%s] Converted next node to point: (%s,%s), orientation: %s" %(self.node_name, x_next, y_next, w_next))
 
         msg = MoveBaseActionGoal() 
         msg.goal.target_pose.header.frame_id = self.frame_id
-        msg.goal.target_pose.pose.position.x = next_x
-        msg.goal.target_pose.pose.position.y = next_y
+        msg.goal.target_pose.pose.position.x = x_next
+        msg.goal.target_pose.pose.position.y = y_next
         msg.goal.target_pose.pose.position.z = 0
         msg.goal.target_pose.pose.orientation.x = 0
         msg.goal.target_pose.pose.orientation.y = 0
         msg.goal.target_pose.pose.orientation.z = 1
-        msg.goal.target_pose.pose.orientation.w = 0.5
+        msg.goal.target_pose.pose.orientation.w = w_next
         self.pub_goal.publish(msg)
         rospy.loginfo("[%s] Dispatched goal point." %(self.node_name))
+
+    def computeNextOrientation(self,x,y):
+        dx = x - self.current_point.x
+        dy = y - self.current_point.y
+        return math.atan2(dy,dx)
 
     def check_ready(self):
         if not self.graph_initialized:
