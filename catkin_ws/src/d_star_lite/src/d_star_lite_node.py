@@ -27,7 +27,7 @@ class DStarLiteNode():
         self.grid_resolution = self.setupParameter("~grid_resolution",1.0) #0.2
         self.occupancy_threshold = self.setupParameter("~occupancy_threshold",0.1)
         self.set_viz_data = self.setupParameter("~set_viz_data",False)
-        self.heuristic = grid_heuristic
+        self.heuristic = euclidean_heuristic
 
         # State variables:
         self.graph = None
@@ -78,7 +78,7 @@ class DStarLiteNode():
         # callback function for map update, should produce self.graph
         self.frame_id = data.header.frame_id
         rospy.loginfo("[%s] Received new grid, shape: (%s,%s), resolution: %s, frame_id: %s" %(self.node_name,data.info.width,data.info.height,data.info.resolution, self.frame_id))
-        rospy.loginfo("Map translation: %s",data.info.origin)
+        rospy.loginfo("[%s] Map translation: (%s,%s)" %(self.node_name,data.info.origin.position.x,data.info.origin.position.y))
         self.map_displacement = data.info.origin.position
         new_width = int(round((data.info.width)*data.info.resolution/self.grid_resolution));
         new_height = int(round((data.info.height)*data.info.resolution/self.grid_resolution));
@@ -235,7 +235,7 @@ class DStarLiteNode():
         return update_vertex_helper(node, self.g, self.rhs, self.goal, self.graph, self.queue)
 
     def compute_shortest_path(self):
-        return compute_shortest_path_helper(self.g, self.rhs, self.start, self.goal, self.key_modifier, self.graph, self.queue)
+        return compute_shortest_path_helper(self.g, self.rhs, self.start, self.goal, self.key_modifier, self.graph, self.queue, self.heuristic)
 
     def resolve_point_to_node(self, point):
         return resolve_point_to_node_helper(point, self.graph, self.grid_resolution,self.map_displacement)
