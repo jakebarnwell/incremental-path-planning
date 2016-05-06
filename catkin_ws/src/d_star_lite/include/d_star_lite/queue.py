@@ -74,6 +74,12 @@ class PriorityQueue():
         next_item = self.A[0][1]
         return self.f(next_item)
 
+    def is_empty(self):
+        if not self.A:
+            return True
+        else:
+            return False
+
     def __len__(self):
         return len(self.A)
 
