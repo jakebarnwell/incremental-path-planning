@@ -26,6 +26,7 @@ class DStarLiteNode():
         # Parameters:
         self.grid_resolution = self.setupParameter("~grid_resolution",1.0) #0.2
         self.occupancy_threshold = self.setupParameter("~occupancy_threshold",0.1)
+        self.print_poses = self.setupParameter("~print_poses",False)
         self.set_viz_data = self.setupParameter("~set_viz_data",False)
         self.heuristic = euclidean_heuristic
 
@@ -65,16 +66,18 @@ class DStarLiteNode():
 
     def updatePose(self, data):
         self.current_point = data.pose.pose.position
-        rospy.loginfo("[%s] Received pose: (%s,%s)" %(self.node_name,self.current_point.x,self.current_point.y))
+        if self.print_poses:
+            rospy.loginfo("[%s] Received pose: (%s,%s)" %(self.node_name,self.current_point.x,self.current_point.y))
         if self.graph_initialized:
             self.current_node = self.resolve_point_to_node(self.current_point)
-            rospy.loginfo("[%s] Resolved pose to node: %s" %(self.node_name,self.current_node))
+            if self.print_poses:
+                rospy.loginfo("[%s] Resolved pose to node: %s" %(self.node_name,self.current_node))
             if self.plan_in_progress:
                 if self.current_node == self.goal:
-                    rospy.loginfo("[%s] Reached goal." %(self.node_name))
+                    rospy.loginfo("[%s] Reached goal: %s" %(self.node_name,self.current_node))
                     self.plan_in_progress = False
                 elif self.current_node == self.next_node:
-                    rospy.loginfo("[%s] Reached %s, performing next D* Lite iteration." %(self.node_name,self.next_node))
+                    rospy.loginfo("[%s] Reached node %s, performing next D* Lite iteration." %(self.node_name,self.next_node))
                     self.iterateDStarLite()
 
     def updateGraph(self, data):
@@ -240,7 +243,7 @@ class DStarLiteNode():
         msg.goal.target_pose.pose.orientation.z = math.sin(w_next/2)
         msg.goal.target_pose.pose.orientation.w = math.cos(w_next/2)
         self.pub_goal.publish(msg)
-        rospy.loginfo("[%s] Dispatched goal point." %(self.node_name))
+        rospy.loginfo("[%s] Dispatched goal point: (%s,%s)" %(self.node_name,x_next,y_next))
 
     def computeNextOrientation(self,x,y):
         dx = x - self.current_point.x
