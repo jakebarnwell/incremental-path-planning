@@ -114,7 +114,7 @@ class Graph(object):
         else:
             for col in range(width):
                 for row in range(height):
-                    graph.add_node((row,col))
+                    graph.add_node((col,row)) # row,col
 
         # Add bi-directional edges between the 8 cardinal+ordinal neighbors.
         #  We need to do this in an efficient way, so let's go top left to
@@ -122,6 +122,7 @@ class Graph(object):
         #  and S neighbors.23
         obstacles = zip(*np.where(numpy_2d_array == 1))
         _WEIGHTS = [1, np.inf, np.inf] # "Wtf are you doing Jake?"
+        _WEIGHTS_d = [np.sqrt(2), np.inf, np.inf]
         for c in range(width):
             for r in range(height):
                 # From this node (col, row), add up to 4 bidirectional edges
@@ -129,7 +130,10 @@ class Graph(object):
                 #  depending on if this node or the neighbor node is an obstacle
                 #  (or both, or neither).
                 for n in efficient_neighbors(r, c):
-                    graph.add_edge((r,c), n, weight=_WEIGHTS[numpy_2d_array[r,c]+numpy_2d_array[n[0],n[1]]], bidirectional=True)
+                    if r == n[0] or c == n[1]:
+                        graph.add_edge((c,r), (n[1],n[0]), weight=_WEIGHTS[numpy_2d_array[r,c]+numpy_2d_array[n[0],n[1]]], bidirectional=True)
+                    else:
+                        graph.add_edge((c,r), (n[1],n[0]), weight=_WEIGHTS_d[numpy_2d_array[r,c]+numpy_2d_array[n[0],n[1]]], bidirectional=True)
                     # Note the use of addition of the two numpy entry values
                     #  instead of multlipication: Possible values using addition
                     #  are {0,1,2} while possible values doing multiplication are
