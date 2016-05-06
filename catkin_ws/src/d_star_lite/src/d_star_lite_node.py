@@ -5,7 +5,7 @@ import sys
 import rospy
 
 from geometry_msgs.msg import PoseWithCovarianceStamped, PoseStamped
-from nav_msgs.msg import OccupancyGrid
+from nav_msgs.msg import OccupancyGrid, Path
 from move_base_msgs.msg import MoveBaseActionGoal
 
 import math
@@ -33,10 +33,12 @@ class DStarLiteNode():
         self.graph = None
         self.old_graph = None
         self.graph_initialized = False
+        self.graph_updated = False
         self.frame_id = None
         self.current_node = None
         self.current_point = None
         self.next_node = None
+        self.path = None
         self.goal = None
         self.start = None
         self.last_start = None
@@ -53,6 +55,7 @@ class DStarLiteNode():
 
         # Publishers:
         self.pub_goal = rospy.Publisher("~goal", MoveBaseActionGoal, queue_size=1, latch=True)
+        self.pub_path = rospy.Publisher("~path", Path, queue_size=1, latch=True)
 
     def setupParameter(self,param_name,default_value):
         value = rospy.get_param(param_name,default_value)
@@ -99,13 +102,22 @@ class DStarLiteNode():
         self.grid = new_grid
         rospy.loginfo("[%s] Downsampled grid, new shape: %s, new resolution: %s" %(self.node_name,self.grid.shape,self.grid_resolution))
 
-        rospy.loginfo("[%s] Converting grid to graph..." %(self.node_name))
+        if self.graph_initialized:
+            rospy.loginfo("[%s] Saving old graph for comparison..." %(self.node_name))
+            start_time = rospy.get_time()
+            self.old_graph = self.graph.copy()
+            total_time = rospy.get_time() - start_time
+            rospy.loginfo("[%s] Old graph saved (%s s)." %(self.node_name,total_time))
+
+        rospy.loginfo("[%s] Converting new grid to graph..." %(self.node_name))
         start_time = rospy.get_time()
         self.graph = Graph.fromArray(self.grid.astype(int), set_viz_data=self.set_viz_data)
         total_time = rospy.get_time() - start_time
         rospy.loginfo("[%s] Created graph (%s s), total nodes: %s" %(self.node_name,total_time,len(self.graph.get_all_nodes())))
 
-        if not self.graph_initialized:
+        if self.graph_initialized:
+            self.graph_updated = True
+        else:
             self.graph_initialized = True
         if self.current_point:
             self.current_node = self.resolve_point_to_node(self.current_point)
@@ -144,7 +156,10 @@ class DStarLiteNode():
         self.queue.insert(self.goal)
 
     def iterateDStarLite(self):
-        self.checkEdgesDStarLite()
+        self.updateKeyModifier()
+        if self.graph_updated:
+            self.checkEdgesDStarLite()
+            self.graph_updated = False
         self.getPathDStarLite()
 
     def getPathDStarLite(self):
@@ -152,21 +167,28 @@ class DStarLiteNode():
         start_time = rospy.get_time()
         self.compute_shortest_path()
         total_time = rospy.get_time() - start_time
+
         if self.g[self.start] == inf:
             self.plan_in_progress = False
             rospy.loginfo("[%s] No feasible path." %(self.node_name))
             return
+
         rospy.loginfo("[%s] Computed shortest path (%s s), extracting next node..." %(self.node_name, total_time))        
         start_time = rospy.get_time()
         self.start = min(self.graph.get_successors(self.start),
                     key = lambda neighbor: (self.graph.get_edge_weight(self.start, neighbor)
                                             + self.g[neighbor]))
-        self.old_graph = self.graph.copy()
-        intended_path = self.get_path()
-        self.next_node = intended_path[0]
+        self.path = self.get_path()
+        self.next_node = self.path[0]
         total_time = rospy.get_time() - start_time
         rospy.loginfo("[%s] Extracted next node (%s s): %s" %(self.node_name, total_time, self.next_node))
+        rospy.loginfo("[%s] Total nodes in path: %s" %(self.node_name, len(self.path)))
         self.publishNextPoint()
+        self.publishPath()
+
+    def updateKeyModifier(self):
+        self.key_modifier = self.key_modifier + self.heuristic(self.last_start, self.start)
+        self.last_start = self.start
 
     def checkEdgesDStarLite(self):
         rospy.loginfo("[%s] Checking for edge changes..." %(self.node_name))
@@ -176,8 +198,6 @@ class DStarLiteNode():
         if changed_edges:
             rospy.loginfo("[%s] Edge changes detected (%s s), performing updates..." %(self.node_name,total_time))
             start_time = rospy.get_time()
-            self.key_modifier = self.key_modifier + self.heuristic(self.last_start, self.start)
-            self.last_start = self.start
             for (old_edge, new_edge) in changed_edges:
                 if old_edge and new_edge: #edge simply changed weight
                     self.update_vertex(old_edge.source)
@@ -189,6 +209,21 @@ class DStarLiteNode():
             rospy.loginfo("[%s] Updates complete (%s s)." %(self.node_name,total_time))
         else:
             rospy.loginfo("[%s] No edge changes detected (%s s)." %(self.node_name,total_time))
+        self.graph_updated = False
+
+    def publishPath(self):
+        msg = Path()
+        msg.header.frame_id = self.frame_id
+        poses = []
+        for node in self.path:
+            x,y = self.convert_node_to_point(node)
+            pose_msg = PoseStamped()
+            pose_msg.header.frame_id = self.frame_id
+            pose_msg.pose.position.x = x
+            pose_msg.pose.position.y = y
+            poses += [pose_msg]
+        msg.poses = poses
+        self.pub_path.publish(msg)
 
     def publishNextPoint(self):
         x_next, y_next = self.convert_node_to_point(self.next_node)
