@@ -95,13 +95,14 @@ class DStarLiteNode():
                 original_map_x = int(round(index_x *self.grid_resolution/data.info.resolution))
                 if original_map_x > data.info.width:
                     original_map_x = data.info.width
-                
+
                 original_map_y = int(round(index_y *self.grid_resolution/data.info.resolution))
                 if original_map_y > data.info.height:
                     original_map_y = data.info.height
-                
+
                 if data.data[original_map_x*data.info.width+original_map_y] > self.occupancy_threshold:
                     new_grid[index_x][index_y] = 1
+                new_grid[index_x][index_y] = data.data[original_map_x*data.info.width+original_map_y]
         self.grid = new_grid
         rospy.loginfo("[%s] Downsampled grid, new shape: %s, new resolution: %s" %(self.node_name,self.grid.shape,self.grid_resolution))
 
@@ -114,7 +115,8 @@ class DStarLiteNode():
 
         rospy.loginfo("[%s] Converting new grid to graph..." %(self.node_name))
         start_time = rospy.get_time()
-        self.graph = Graph.fromArray(self.grid.astype(int), set_viz_data=self.set_viz_data)
+        self.graph = Graph.fromArray(self.grid.astype(int), set_viz_data=self.set_viz_data,\
+         continuous=True, thresh_1=self.occupancy_threshold, thresh_0=10)
         total_time = rospy.get_time() - start_time
         rospy.loginfo("[%s] Created graph (%s s), total nodes: %s" %(self.node_name,total_time,len(self.graph.get_all_nodes())))
 
@@ -128,7 +130,7 @@ class DStarLiteNode():
 
     def updateGoal(self, data):
         goal_point = data.pose.position
-        rospy.loginfo("[%s] Received goal point: (%s,%s)" %(self.node_name,goal_point.x,goal_point.y))        
+        rospy.loginfo("[%s] Received goal point: (%s,%s)" %(self.node_name,goal_point.x,goal_point.y))
         if self.graph_initialized:
             self.goal = self.resolve_point_to_node(goal_point)
             rospy.loginfo("[%s] Resolved goal to node: %s" %(self.node_name,self.goal))
@@ -176,7 +178,7 @@ class DStarLiteNode():
             rospy.loginfo("[%s] No feasible path." %(self.node_name))
             return
 
-        rospy.loginfo("[%s] Computed shortest path (%s s), extracting next node..." %(self.node_name, total_time))        
+        rospy.loginfo("[%s] Computed shortest path (%s s), extracting next node..." %(self.node_name, total_time))
         start_time = rospy.get_time()
         self.start = min(self.graph.get_successors(self.start),
                     key = lambda neighbor: (self.graph.get_edge_weight(self.start, neighbor)
@@ -233,7 +235,7 @@ class DStarLiteNode():
         w_next = self.computeNextOrientation(x_next,y_next)
         rospy.loginfo("[%s] Converted next node to point: (%s,%s), orientation: %s" %(self.node_name, x_next, y_next, w_next))
 
-        msg = MoveBaseActionGoal() 
+        msg = MoveBaseActionGoal()
         msg.goal.target_pose.header.frame_id = self.frame_id
         msg.goal.target_pose.pose.position.x = x_next
         msg.goal.target_pose.pose.position.y = y_next

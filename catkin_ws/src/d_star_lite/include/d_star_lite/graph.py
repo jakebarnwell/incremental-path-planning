@@ -55,7 +55,8 @@ class Graph(object):
         return node in self._nodes
 
     @classmethod
-    def fromArray(grid_class, numpy_2d_array, set_viz_data=True):
+    def fromArray(grid_class, numpy_2d_array, set_viz_data=True,\
+        continuous=False, thresh_1=None, thresh_0=None):
         """
         Creates a Graph object from a 2D numpy array. The 2d numpy
         array must be at least 1x1. The entries of the array must
@@ -76,6 +77,9 @@ class Graph(object):
         #  5x4 matrices (5 rows, 4 columns), with the origin being top
         #  left.
 
+        if continuous:
+            assert thresh_1 != None and thresh_0 != None and thresh_1 > thresh_0
+
         # Make sure this is a 2D array
         assert len(numpy_2d_array.shape) == 2
         height, width = numpy_2d_array.shape
@@ -91,6 +95,18 @@ class Graph(object):
             n = [(row + d[0], col + d[1]) for d in _DELTA]
             n = filter(lambda nn: 0<=nn[0]<height and 0<=nn[1]<width, n)
             return n
+
+        def get_continuous_weight(val1, val2):
+            _MIN_OBSTACLE_WEIGHT = 1;
+            _MAX_OBSTACLE_WEIGHT = 5;
+            val = max(val1, val2)
+            if val > thresh_1:
+                return np.inf
+            elif val < thresh_0:
+                return _MIN_OBSTACLE_WEIGHT
+            else:
+                return _MIN_OBSTACLE_WEIGHT +\
+                    ((val - thresh_0) / (thresh_1 - thresh_0)) * (_MAX_OBSTACLE_WEIGHT - _MIN_OBSTACLE_WEIGHT)
 
         graph = grid_class()
 
@@ -121,7 +137,6 @@ class Graph(object):
         #  and S neighbors.
         obstacles = zip(*np.where(numpy_2d_array == 1))
         _WEIGHTS = [1, np.inf, np.inf] # Cardinal weights
-        _WEIGHTS_d = [np.sqrt(2), np.inf, np.inf] # Oriental weights
         for c in range(width):
             for r in range(height):
                 # From this node (c,r), add up to 4 bidirectional edges
@@ -129,14 +144,17 @@ class Graph(object):
                 #  or infty depending on if this node or the neighbor node (or
                 #  both, or neither) is an obstacle.
                 for n in efficient_neighbors(r, c):
-                    if r == n[0] or c == n[1]:
-                        graph.add_edge((c,r), (n[1],n[0]), weight=_WEIGHTS[numpy_2d_array[r,c]+numpy_2d_array[n[0],n[1]]], bidirectional=True)
+                    factor = 1 if r == n[0] or c == n[1] else np.sqrt(2)
+                    if not continuous:
+                        w = factor * _WEIGHTS[numpy_2d_array[r,c]+numpy_2d_array[n[0],n[1]]]
+                        # Note the use of addition of the two numpy entry values
+                        #  instead of multlipication: Possible values using addition
+                        #  are {0,1,2} while possible values doing multiplication are
+                        #  {0,1}. However, addition is about 10% faster...
                     else:
-                        graph.add_edge((c,r), (n[1],n[0]), weight=_WEIGHTS_d[numpy_2d_array[r,c]+numpy_2d_array[n[0],n[1]]], bidirectional=True)
-                    # Note the use of addition of the two numpy entry values
-                    #  instead of multlipication: Possible values using addition
-                    #  are {0,1,2} while possible values doing multiplication are
-                    #  {0,1}. However, addition is about 10% faster...
+                        w = factor * get_continuous_weight(numpy_2d_array[r,c], numpy_2d_array[n[1],n[0]])
+
+                    graph.add_edge((c,r), (n[1],n[0]), weight=w)
 
         return graph
 
