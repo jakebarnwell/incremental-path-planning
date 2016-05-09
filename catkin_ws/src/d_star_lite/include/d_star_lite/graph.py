@@ -118,7 +118,7 @@ class Graph(object):
         # Add bi-directional edges between the 8 cardinal+ordinal neighbors.
         #  We need to do this in an efficient way, so let's go top left to
         #  bottom right, adding bi-directional edges to each of the NE, E, SE,
-        #  and S neighbors.23
+        #  and S neighbors.
         obstacles = zip(*np.where(numpy_2d_array == 1))
         _WEIGHTS = [1, np.inf, np.inf] # Cardinal weights
         _WEIGHTS_d = [np.sqrt(2), np.inf, np.inf] # Oriental weights
