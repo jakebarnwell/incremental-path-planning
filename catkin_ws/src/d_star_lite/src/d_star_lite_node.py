@@ -174,6 +174,7 @@ class DStarLiteNode():
     def initializeDStarLite(self):
         # Set start to current position
         self.start = self.current_node
+        self.next_node = self.current_node
         self.last_start = self.start
 
         # Set g=inf and rhs=inf for all nodes, except the goal node, which has rhs=0
@@ -208,8 +209,8 @@ class DStarLiteNode():
 
         rospy.loginfo("[%s] Computed shortest path (%s s), extracting next node..." %(self.node_name, total_time))        
         start_time = rospy.get_time()
-        self.start = min(self.graph.get_successors(self.start),
-                    key = lambda neighbor: (self.graph.get_edge_weight(self.start, neighbor)
+        self.start = min(self.graph.get_successors(self.next_node),
+                    key = lambda neighbor: (self.graph.get_edge_weight(self.next_node, neighbor)
                                             + self.g[neighbor]))
         self.path = self.get_path()
         next_idx = int(1.0/(2*self.grid_resolution))
