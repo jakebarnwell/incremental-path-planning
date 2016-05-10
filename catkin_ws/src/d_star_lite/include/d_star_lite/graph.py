@@ -204,6 +204,14 @@ class Graph(object):
                              % map(str, (source, target)))
         return edge.weight
 
+    def set_edge_weight(self, source, target, value):
+        edge = self.get_edge(source, target)
+        if edge is None:
+            raise ValueError("There is no edge from %s to %s"
+                             % map(str, (source, target)))
+        edge.weight = value
+        return edge
+
     def get_changed_edges(self, other_graph):
         """returns a set of tuples (my_edge, their_edge) containing
         corresponding pairs of edges whose weights differ between the two graphs.

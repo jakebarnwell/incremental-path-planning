@@ -25,13 +25,15 @@ class DStarLiteNode():
         self.node_name = rospy.get_name()
 
         # Parameters:
-        self.grid_resolution = self.setupParameter("~grid_resolution",1.0) #0.2
-        self.occupancy_threshold = self.setupParameter("~occupancy_threshold",0.1)
+        self.grid_resolution = self.setupParameter("~grid_resolution",0.05)
+        self.occupancy_threshold = self.setupParameter("~occupancy_threshold",38.5)
         self.print_poses = self.setupParameter("~print_poses",False)
         self.set_viz_data = self.setupParameter("~set_viz_data",False)
         self.heuristic = euclidean_heuristic
 
         # State variables:
+        self.grid = None
+        self.old_grid = None
         self.graph = None
         self.old_graph = None
         self.graph_initialized = False
@@ -105,37 +107,25 @@ class DStarLiteNode():
         rospy.loginfo("[%s] Received new grid, shape: (%s,%s), resolution: %s, frame_id: %s" %(self.node_name,data.info.width,data.info.height,data.info.resolution, self.frame_id))
         rospy.loginfo("[%s] Map translation: (%s,%s)" %(self.node_name,data.info.origin.position.x,data.info.origin.position.y))
         self.map_displacement = data.info.origin.position
-        new_width = int(round((data.info.width)*data.info.resolution/self.grid_resolution));
-        new_height = int(round((data.info.height)*data.info.resolution/self.grid_resolution));
-        new_grid = np.zeros((new_width,new_height))
-        for index_x in range(new_width):
-            for index_y in range(new_height):
-
-                original_map_x = int(round(index_x *self.grid_resolution/data.info.resolution))
-                if original_map_x > data.info.width:
-                    original_map_x = data.info.width
-                
-                original_map_y = int(round(index_y *self.grid_resolution/data.info.resolution))
-                if original_map_y > data.info.height:
-                    original_map_y = data.info.height
-                
-                if data.data[original_map_x*data.info.width+original_map_y] > self.occupancy_threshold:
-                    new_grid[index_x][index_y] = 1
-        self.grid = new_grid
-        rospy.loginfo("[%s] Downsampled grid, new shape: %s, new resolution: %s" %(self.node_name,self.grid.shape,self.grid_resolution))
 
         if self.graph_initialized:
-            rospy.loginfo("[%s] Saving old graph for comparison..." %(self.node_name))
+            rospy.loginfo("[%s] Saving old grid for comparison..." %(self.node_name))
             start_time = rospy.get_time()
-            self.old_graph = self.graph.copy()
+            self.old_grid = self.grid.copy()
+            #self.old_graph = self.graph.copy()
             total_time = rospy.get_time() - start_time
-            rospy.loginfo("[%s] Old graph saved (%s s)." %(self.node_name,total_time))
+            rospy.loginfo("[%s] Old grid saved (%s s)." %(self.node_name,total_time))
 
-        rospy.loginfo("[%s] Converting new grid to graph..." %(self.node_name))
-        start_time = rospy.get_time()
-        self.graph = Graph.fromArray(self.grid.astype(int), set_viz_data=self.set_viz_data)
-        total_time = rospy.get_time() - start_time
-        rospy.loginfo("[%s] Created graph (%s s), total nodes: %s" %(self.node_name,total_time,len(self.graph.get_all_nodes())))
+        self.grid = self.downSample(data.data,data.info.height,data.info.width,data.info.resolution)
+        rospy.loginfo("[%s] Downsampled grid, new shape: %s, new resolution: %s" %(self.node_name,self.grid.shape,self.grid_resolution))
+
+        if not self.graph_initialized:
+            self.old_grid = self.grid.copy()
+            rospy.loginfo("[%s] Converting new grid to graph..." %(self.node_name))
+            start_time = rospy.get_time()
+            self.graph = Graph.fromArray(self.grid.astype(int), set_viz_data=self.set_viz_data)
+            total_time = rospy.get_time() - start_time
+            rospy.loginfo("[%s] Created graph (%s s), total nodes: %s" %(self.node_name,total_time,len(self.graph.get_all_nodes())))
 
         if self.graph_initialized:
             self.graph_updated = True
@@ -144,6 +134,26 @@ class DStarLiteNode():
         if self.current_point:
             self.current_node = self.resolve_point_to_node(self.current_point)
             rospy.loginfo("[%s] Resolved pose to node: %s" %(self.node_name,self.current_node))
+
+    def downSample(self, grid, height, width, resolution):
+        new_width = int(round((width)*resolution/self.grid_resolution));
+        new_height = int(round((height)*resolution/self.grid_resolution));
+        new_grid = np.zeros((new_width,new_height))
+        for index_x in range(new_width):
+            for index_y in range(new_height):
+
+                original_map_x = int(round(index_x *self.grid_resolution/resolution))
+                if original_map_x > width:
+                    original_map_x = width
+                
+                original_map_y = int(round(index_y *self.grid_resolution/resolution))
+                if original_map_y > height:
+                    original_map_y = height
+                
+                if grid[original_map_x*width+original_map_y] > self.occupancy_threshold:
+                    new_grid[index_x][index_y] = 1
+        return new_grid
+        
 
     def updateGoal(self, data):
         self.dispatched_end = False
@@ -220,23 +230,50 @@ class DStarLiteNode():
     def checkEdgesDStarLite(self):
         rospy.loginfo("[%s] Checking for edge changes..." %(self.node_name))
         start_time = rospy.get_time()
-        changed_edges = self.old_graph.get_changed_edges(self.graph)
+        #changed_edges = self.old_graph.get_changed_edges(self.graph)
+        changed_edges = self.get_changed_edges()
         total_time = rospy.get_time() - start_time
         if changed_edges:
             rospy.loginfo("[%s] Edge changes detected (%s s), performing updates..." %(self.node_name,total_time))
             start_time = rospy.get_time()
-            for (old_edge, new_edge) in changed_edges:
-                if old_edge and new_edge: #edge simply changed weight
-                    self.update_vertex(old_edge.source)
-                elif not old_edge: #new edge was added
-                    raise NotImplementedError("Edge addition not yet supported")
-                else: #old edge was deleted
-                    raise NotImplementedError("Edge deletion not yet supported")
+            #for (old_edge, new_edge) in changed_edges:
+            for edge in changed_edges:
+                self.update_vertex(edge.source)
+                #if old_edge and new_edge: #edge simply changed weight
+                #    self.update_vertex(old_edge.source)
+                #elif not old_edge: #new edge was added
+                #    raise NotImplementedError("Edge addition not yet supported")
+                #else: #old edge was deleted
+                #    raise NotImplementedError("Edge deletion not yet supported")
             total_time = rospy.get_time() - start_time
             rospy.loginfo("[%s] Updates complete (%s s)." %(self.node_name,total_time))
         else:
             rospy.loginfo("[%s] No edge changes detected (%s s)." %(self.node_name,total_time))
         self.graph_updated = False
+
+    def get_changed_edges(self):
+        diff_grid = self.grid - self.old_grid
+        new_obstacles = zip(*np.where(diff_grid == 1))
+        new_free = zip(*np.where(diff_grid == -1))
+
+        updated_edges = []
+
+        for n in new_obstacles:
+            node = (n[1],n[0])
+            neighbors = self.graph.get_successors(node)
+            for neighbor in neighbors:
+                updated_edges += [self.set_edge_weight(node,neighbor,inf)]
+                updated_edges += [self.set_edge_weight(neighbor,node,inf)]
+
+        for n in new_free:
+            node = (n[1],n[0])
+            neighbors = self.graph.get_successors(node)
+            for neighbor in neighbors:
+                if self.grid[neighbor[1],neighbor[0]] == 0:
+                    updated_edges += [self.set_edge_weight(node,neighbor,self.weighting(node,neighbor))]
+                    updated_edges += [self.set_edge_weight(neighbor,node,self.weighting(neighbor,node))]
+        
+        return updated_edges
 
     def publishPath(self):
         msg = Path()
@@ -293,6 +330,9 @@ class DStarLiteNode():
             return False
         else:
             return True
+
+    def weighting(self, node1, node2):
+        return self.heuristic(node1,node2)
 
     def get_path(self):
         return get_intended_path(self.start, self.goal, self.graph, self.g)
