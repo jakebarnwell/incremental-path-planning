@@ -7,6 +7,7 @@ import rospy
 from geometry_msgs.msg import PoseWithCovarianceStamped, PoseStamped
 from nav_msgs.msg import OccupancyGrid, Path
 from move_base_msgs.msg import MoveBaseActionGoal
+from actionlib_msgs.msg import GoalStatusArray, GoalStatus, GoalID
 
 import math
 import numpy as np
@@ -41,6 +42,8 @@ class DStarLiteNode():
         self.next_node = None
         self.path = None
         self.goal = None
+        self.goal_idx = 0
+        self.dispatched_end = False
         self.start = None
         self.last_start = None
         self.g = None
@@ -53,6 +56,7 @@ class DStarLiteNode():
         self.sub_pose = rospy.Subscriber("~pose", PoseWithCovarianceStamped, self.updatePose, queue_size=1)
         self.sub_grid = rospy.Subscriber("~grid", OccupancyGrid, self.updateGraph, queue_size = 1)
         self.sub_goal = rospy.Subscriber("~goal_request", PoseStamped, self.updateGoal, queue_size=1)
+        self.sub_goal_status = rospy.Subscriber("~goal_status", GoalStatusArray, self.checkGoal, queue_size=1)
 
         # Publishers:
         self.pub_goal = rospy.Publisher("~goal", MoveBaseActionGoal, queue_size=1, latch=True)
@@ -72,6 +76,7 @@ class DStarLiteNode():
             self.current_node = self.resolve_point_to_node(self.current_point)
             if self.print_poses:
                 rospy.loginfo("[%s] Resolved pose to node: %s" %(self.node_name,self.current_node))
+            """
             if self.plan_in_progress:
                 if self.current_node == self.goal:
                     rospy.loginfo("[%s] Reached goal: %s" %(self.node_name,self.current_node))
@@ -79,6 +84,20 @@ class DStarLiteNode():
                 elif self.current_node == self.next_node:
                     rospy.loginfo("[%s] Reached node %s, performing next D* Lite iteration." %(self.node_name,self.next_node))
                     self.iterateDStarLite()
+            """            
+
+    def checkGoal(self,data):
+        if self.plan_in_progress:
+            for status in data.status_list:
+                if status.goal_id.id == str(self.goal_idx):
+                    if status.status == status.SUCCEEDED:
+                        self.goal_idx += 1
+                        if self.dispatched_end:
+                            rospy.loginfo("[%s] Reached goal: %s" %(self.node_name,self.current_node))
+                            self.plan_in_progress = False
+                        else:
+                            rospy.loginfo("[%s] Reached node %s, performing next D* Lite iteration." %(self.node_name,self.next_node))
+                            self.iterateDStarLite()     
 
     def updateGraph(self, data):
         # callback function for map update, should produce self.graph
@@ -127,6 +146,7 @@ class DStarLiteNode():
             rospy.loginfo("[%s] Resolved pose to node: %s" %(self.node_name,self.current_node))
 
     def updateGoal(self, data):
+        self.dispatched_end = False
         goal_point = data.pose.position
         rospy.loginfo("[%s] Received goal point: (%s,%s)" %(self.node_name,goal_point.x,goal_point.y))        
         if self.graph_initialized:
@@ -182,7 +202,11 @@ class DStarLiteNode():
                     key = lambda neighbor: (self.graph.get_edge_weight(self.start, neighbor)
                                             + self.g[neighbor]))
         self.path = self.get_path()
-        self.next_node = self.path[0]
+        next_idx = int(1.0/(2*self.grid_resolution))
+        if next_idx > (len(self.path) - 1):
+            next_idx = len(self.path) - 1
+        self.next_node = self.path[next_idx]
+
         total_time = rospy.get_time() - start_time
         rospy.loginfo("[%s] Extracted next node (%s s): %s" %(self.node_name, total_time, self.next_node))
         rospy.loginfo("[%s] Total nodes in path: %s" %(self.node_name, len(self.path)))
@@ -233,7 +257,11 @@ class DStarLiteNode():
         w_next = self.computeNextOrientation(x_next,y_next)
         rospy.loginfo("[%s] Converted next node to point: (%s,%s), orientation: %s" %(self.node_name, x_next, y_next, w_next))
 
+        goal_id = GoalID()
+        goal_id.id = str(self.goal_idx)
+
         msg = MoveBaseActionGoal() 
+        msg.goal_id = goal_id
         msg.goal.target_pose.header.frame_id = self.frame_id
         msg.goal.target_pose.pose.position.x = x_next
         msg.goal.target_pose.pose.position.y = y_next
@@ -244,6 +272,9 @@ class DStarLiteNode():
         msg.goal.target_pose.pose.orientation.w = math.cos(w_next/2)
         self.pub_goal.publish(msg)
         rospy.loginfo("[%s] Dispatched goal point: (%s,%s)" %(self.node_name,x_next,y_next))
+
+        if self.next_node == self.goal:
+            self.dispatched_end = True
 
     def computeNextOrientation(self,x,y):
         dx = x - self.current_point.x

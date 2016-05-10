@@ -3,6 +3,7 @@
 	<remap from="~pose" to="/amcl_pose"/>
 	<remap from="~goal" to="/move_base/goal"/>
 	<remap from="~goal_request" to="/move_base_simple/goal_d_star_lite"/>
+    <remap from="~goal_status" to="/move_base/status"/>
 	<node name="d_star_lite_node" pkg="d_star_lite"	type="d_star_lite_node.py" output="screen">
 	</node>
 
