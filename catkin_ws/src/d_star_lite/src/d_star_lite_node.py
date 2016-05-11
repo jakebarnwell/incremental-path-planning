@@ -25,7 +25,7 @@ class DStarLiteNode():
         self.node_name = rospy.get_name()
 
         # Parameters:
-        self.grid_resolution = self.setupParameter("~grid_resolution",0.05)
+        self.grid_resolution = self.setupParameter("~grid_resolution",0.5)
         self.occupancy_threshold = self.setupParameter("~occupancy_threshold",38.5)
         self.print_poses = self.setupParameter("~print_poses",False)
         self.set_viz_data = self.setupParameter("~set_viz_data",False)
@@ -235,7 +235,7 @@ class DStarLiteNode():
         changed_edges = self.get_changed_edges()
         total_time = rospy.get_time() - start_time
         if changed_edges:
-            rospy.loginfo("[%s] Edge changes detected (%s s), performing updates..." %(self.node_name,total_time))
+            rospy.loginfo("[%s] Edge changes detected (%s s): %s, performing updates..." %(self.node_name,total_time,len(changed_edges)))
             start_time = rospy.get_time()
             #for (old_edge, new_edge) in changed_edges:
             for edge in changed_edges:
@@ -263,16 +263,16 @@ class DStarLiteNode():
             node = (n[1],n[0])
             neighbors = self.graph.get_successors(node)
             for neighbor in neighbors:
-                updated_edges += [self.set_edge_weight(node,neighbor,inf)]
-                updated_edges += [self.set_edge_weight(neighbor,node,inf)]
+                updated_edges += [self.graph.set_edge_weight(node,neighbor,inf)]
+                updated_edges += [self.graph.set_edge_weight(neighbor,node,inf)]
 
         for n in new_free:
             node = (n[1],n[0])
             neighbors = self.graph.get_successors(node)
             for neighbor in neighbors:
                 if self.grid[neighbor[1],neighbor[0]] == 0:
-                    updated_edges += [self.set_edge_weight(node,neighbor,self.weighting(node,neighbor))]
-                    updated_edges += [self.set_edge_weight(neighbor,node,self.weighting(neighbor,node))]
+                    updated_edges += [self.graph.set_edge_weight(node,neighbor,self.weighting(node,neighbor))]
+                    updated_edges += [self.graph.set_edge_weight(neighbor,node,self.weighting(neighbor,node))]
         
         return updated_edges
 

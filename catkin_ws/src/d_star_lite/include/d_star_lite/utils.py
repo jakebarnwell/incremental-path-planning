@@ -7,6 +7,8 @@ from d_star_lite.grid import *
 from d_star_lite.queue import PriorityQueue
 from d_star_lite.graph import get_intended_path
 
+inf = float("inf")
+
 def grid_heuristic(node1, node2):
     """Given two nodes as (x,y) grid-coordinate tuples (e.g. (2,3)), computes the
     heuristic grid-based heuristic value between the nodes.
