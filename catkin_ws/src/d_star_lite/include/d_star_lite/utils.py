@@ -1,5 +1,7 @@
 from __future__ import division
 
+import time
+
 import math
 import numpy as np
 from d_star_lite.world import World
@@ -44,29 +46,33 @@ def compute_shortest_path_helper(g, rhs, start, goal, key_modifier, graph, queue
     shortest path by popping nodes off the queue, updating their g and rhs
     values, and calling update_vertex on their neighbors.  Returns nothing."""
     # Helper functions that take in only one argument, node:
+
     def calc_key(node):
         return calc_key_helper(node, g, rhs, start, key_modifier, heuristic=_heuristic)
     def update_vertex(node):
         return update_vertex_helper(node, g, rhs, goal, graph, queue)
 
+    N = 0
     while True:
         smallest_key = queue.top_key()
         if smallest_key >= calc_key(start) and rhs[start] == g[start]:
             break
         node = queue.pop()
+        N += 1
         if smallest_key < calc_key(node):
             print smallest_key, calc_key(node), node
             queue.insert(node)
         elif g[node] > rhs[node]:
             g[node] = rhs[node]
-            for next_node in graph.get_predecessors(node):
+            for next_node in graph.get_predecessors_fast(node):
                 update_vertex(next_node)
         else:
             g[node] = inf
-            for next_node in graph.get_predecessors(node) + [node]:
+            for next_node in graph.get_predecessors_fast(node) + [node]:
                 update_vertex(next_node)
         if queue.is_empty():
             break
+    return N
 
 def resolve_point_to_node_helper(point, graph, grid_res,map_displacement):
     #return min(graph.get_all_nodes(), key = lambda node: math.sqrt((node[0]-point.x)**2 + (node[1]-point.y)**2))

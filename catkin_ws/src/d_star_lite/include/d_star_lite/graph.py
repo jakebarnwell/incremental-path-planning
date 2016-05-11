@@ -182,6 +182,9 @@ class Graph(object):
     def get_successors(self, node):
         return map(lambda edge: edge.target, self.get_outgoing_edges(node))
 
+    def get_predecessors_fast(self, node):
+        return map(lambda edge: edge.target, self.get_outgoing_edges(node))
+
     def get_predecessors(self, node):
         predecessors = []
         for source in self._edges:

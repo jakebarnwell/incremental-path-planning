@@ -49,6 +49,7 @@ class DStarLiteNode():
         self.goal_idx = 0
         self.dispatched_end = False
         self.start = None
+        self.queue = None
         self.last_start = None
         self.g = None
         self.rhs = None
@@ -93,10 +94,12 @@ class DStarLiteNode():
                     if status.status == status.SUCCEEDED:
                         self.advanceDStarLite()
                     elif status.status == status.ABORTED:
+                        self.goal_idx += 1
                         rospy.loginfo("[%s] Goal aborted by move_base action server, aborting plan." %(self.node_name))
                         self.plan_in_progress = False
                         self.clearPath()
                     elif status.status == status.REJECTED:
+                        self.goal_idx += 1
                         rospy.loginfo("[%s] Goal rejected by move_base action server, canceling plan." %(self.node_name))
                         self.plan_in_progress = False
                         self.clearPath()
@@ -215,8 +218,9 @@ class DStarLiteNode():
     def getPathDStarLite(self):
         rospy.loginfo("[%s] Computing shortest path..." %(self.node_name))
         start_time = rospy.get_time()
-        self.compute_shortest_path()
+        n_expanded = self.compute_shortest_path()
         total_time = rospy.get_time() - start_time
+        rospy.loginfo("[%s] Nodes expanded: %s" %(self.node_name,n_expanded))
 
         if self.g[self.start] == inf:
             self.plan_in_progress = False
