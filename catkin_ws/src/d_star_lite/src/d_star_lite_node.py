@@ -29,7 +29,9 @@ class DStarLiteNode():
         self.occupancy_threshold = self.setupParameter("~occupancy_threshold",38.5)
         self.print_poses = self.setupParameter("~print_poses",False)
         self.set_viz_data = self.setupParameter("~set_viz_data",False)
-        self.heuristic = euclidean_heuristic
+        self.use_proximity = self.setupParameter("~use_proximity",True)
+        self.capture_radius = self.setupParameter("~capture_radius",0.25)
+        self.heuristic = square_euclidean_heuristic
 
         # State variables:
         self.grid = None
@@ -58,7 +60,7 @@ class DStarLiteNode():
         self.sub_pose = rospy.Subscriber("~pose", PoseWithCovarianceStamped, self.updatePose, queue_size=1)
         self.sub_grid = rospy.Subscriber("~grid", OccupancyGrid, self.updateGraph, queue_size = 1)
         self.sub_goal = rospy.Subscriber("~goal_request", PoseStamped, self.updateGoal, queue_size=1)
-        self.sub_goal_status = rospy.Subscriber("~goal_status", GoalStatusArray, self.checkGoal, queue_size=1)
+        self.sub_goal_status = rospy.Subscriber("~goal_status", GoalStatusArray, self.checkGoalStatus, queue_size=1)
 
         # Publishers:
         self.pub_goal = rospy.Publisher("~goal", MoveBaseActionGoal, queue_size=1, latch=True)
@@ -78,28 +80,35 @@ class DStarLiteNode():
             self.current_node = self.resolve_point_to_node(self.current_point)
             if self.print_poses:
                 rospy.loginfo("[%s] Resolved pose to node: %s" %(self.node_name,self.current_node))
-            """
-            if self.plan_in_progress:
-                if self.current_node == self.goal:
-                    rospy.loginfo("[%s] Reached goal: %s" %(self.node_name,self.current_node))
-                    self.plan_in_progress = False
-                elif self.current_node == self.next_node:
-                    rospy.loginfo("[%s] Reached node %s, performing next D* Lite iteration." %(self.node_name,self.next_node))
-                    self.iterateDStarLite()
-            """            
+            
+            if self.use_proximity and self.plan_in_progress:
+                if self.checkProximityToNext():
+                    rospy.loginfo("[%s] Achieved capture radius, advancing to next iteration." %(self.node_name))
+                    self.advanceDStarLite()
 
-    def checkGoal(self,data):
+    def checkGoalStatus(self,data):
         if self.plan_in_progress:
             for status in data.status_list:
                 if status.goal_id.id == str(self.goal_idx):
                     if status.status == status.SUCCEEDED:
-                        self.goal_idx += 1
-                        if self.dispatched_end:
-                            rospy.loginfo("[%s] Reached goal: %s" %(self.node_name,self.current_node))
-                            self.plan_in_progress = False
-                        else:
-                            rospy.loginfo("[%s] Reached node %s, performing next D* Lite iteration." %(self.node_name,self.next_node))
-                            self.iterateDStarLite()     
+                        self.advanceDStarLite()
+                    elif status.status == status.ABORTED:
+                        rospy.loginfo("[%s] Goal aborted by move_base action server, aborting plan." %(self.node_name))
+                        self.plan_in_progress = False
+                        self.clearPath()
+                    elif status.status == status.REJECTED:
+                        rospy.loginfo("[%s] Goal rejected by move_base action server, canceling plan." %(self.node_name))
+                        self.plan_in_progress = False
+                        self.clearPath()
+
+    def advanceDStarLite(self):
+        self.goal_idx += 1
+        if self.dispatched_end:
+            rospy.loginfo("[%s] Reached goal: %s" %(self.node_name,self.current_node))
+            self.plan_in_progress = False
+        else:
+            rospy.loginfo("[%s] Reached node %s, performing next D* Lite iteration." %(self.node_name,self.next_node))
+            self.iterateDStarLite()
 
     def updateGraph(self, data):
         # callback function for map update, should produce self.graph
@@ -297,6 +306,10 @@ class DStarLiteNode():
         msg.poses = poses
         self.pub_path.publish(msg)
 
+    def clearPath(self):
+        self.path = []
+        self.publishPath()
+
     def publishNextPoint(self):
         x_next, y_next = self.convert_node_to_point(self.next_node)
         w_next = self.computeNextOrientation(x_next,y_next)
@@ -338,6 +351,11 @@ class DStarLiteNode():
             return False
         else:
             return True
+
+    def checkProximityToNext(self):
+        point1 = (self.current_point.x,self.current_point.y)
+        point2 = self.convert_node_to_point(self.next_node)
+        return np.linalg.norm(np.array(point2) - np.array(point1)) <= self.capture_radius
 
     def weighting(self, node1, node2):
         return self.heuristic(node1,node2)

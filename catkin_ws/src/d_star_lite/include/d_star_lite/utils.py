@@ -18,6 +18,11 @@ def grid_heuristic(node1, node2):
 def euclidean_heuristic(node1, node2):
     return np.linalg.norm(np.array(node2) - np.array(node1))
 
+def square_euclidean_heuristic(node1, node2):
+    s = min(map(abs, [node1[i]-node2[i] for i in (0,1)]))
+    l = max(map(abs, [node1[i]-node2[i] for i in (0,1)])) - s
+    return s*math.sqrt(2) + l
+
 def calc_key_helper(node, g, rhs, start, key_modifier, heuristic=grid_heuristic):
     "Computes the node's current key and returns it as a tuple of two numbers."
     min_g_rhs = min([g[node], rhs[node]])
