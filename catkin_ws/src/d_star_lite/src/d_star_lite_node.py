@@ -128,7 +128,10 @@ class DStarLiteNode():
             rospy.loginfo("[%s] Created graph (%s s), total nodes: %s" %(self.node_name,total_time,len(self.graph.get_all_nodes())))
 
         if self.graph_initialized:
-            self.graph_updated = True
+            if self.plan_in_progress:
+                self.graph_updated = True
+            else
+                self.get_changed_edges()
         else:
             self.graph_initialized = True
         if self.current_point:
@@ -188,6 +191,10 @@ class DStarLiteNode():
         # Initialize the queue using the priority function calc_key
         self.queue = PriorityQueue(f=lambda node: self.calc_key(node))
         self.queue.insert(self.goal)
+
+        # Process any pending graph updates:
+        if self.graph_updated:
+            self.get_changed_edges()
 
     def iterateDStarLite(self):
         self.updateKeyModifier()
