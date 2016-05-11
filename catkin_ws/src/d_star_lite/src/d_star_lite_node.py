@@ -130,7 +130,7 @@ class DStarLiteNode():
         if self.graph_initialized:
             if self.plan_in_progress:
                 self.graph_updated = True
-            else
+            else:
                 self.get_changed_edges()
         else:
             self.graph_initialized = True
